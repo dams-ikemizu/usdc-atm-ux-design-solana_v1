@@ -13,3 +13,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export const FEE_PAYER_PATH = join(__dirname, "..", "dams-feepayer.devnet.json");
 
 export const PORT = 8787;
+
+// 仮置きの固定レート。実際のレートAPI連携は別スコープ。
+export const FIXED_RATE_JPY_PER_USDC = 148.62;
+
+// クォートの有効期限(仮に3分)。
+export const QUOTE_TTL_MS = 3 * 60 * 1000;

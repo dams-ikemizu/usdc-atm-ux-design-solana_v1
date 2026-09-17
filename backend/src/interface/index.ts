@@ -16,3 +16,14 @@ export interface QuoteRequestBody {
   atmId?: string;
   amountJpy?: number;
 }
+
+export interface QuoteRecord {
+  quoteId: string;
+  atmId: string;
+  amountJpy: number;
+  rateJpyPerUsdc: number;
+  usdcAmount: number;
+  referencePublicKey: string;
+  createdAt: string;
+  expiresAt: string;
+}

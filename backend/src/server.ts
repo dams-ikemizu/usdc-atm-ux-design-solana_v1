@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { randomUUID } from "node:crypto";
 import { checkSolanaConnectivity, recordQuoteOnChain } from "./solana.ts";
+import { createQuote } from "./quotes.ts";
 import { PORT } from "./constants.ts";
 import type { QuoteRequestBody } from "./interface/index.ts";
 
@@ -52,10 +52,11 @@ async function handleQuoteRequest(req: IncomingMessage, res: ServerResponse): Pr
 
   console.log(`[quote-request] Solana接続OK: slot=${solana.slot} (${solana.network})`);
 
-  const quoteId = randomUUID();
+  const quote = createQuote(atmId, amountJpy);
+
   let onChain;
   try {
-    onChain = await recordQuoteOnChain(quoteId);
+    onChain = await recordQuoteOnChain(quote.quoteId);
   } catch (err) {
     console.error("[quote-request] Solanaへの送信に失敗", err);
     sendJson(res, 502, { error: "failed to send transaction to Solana" });
@@ -65,16 +66,14 @@ async function handleQuoteRequest(req: IncomingMessage, res: ServerResponse): Pr
   console.log(`[quote-request] Solana送信OK: ${onChain.signature}`);
 
   sendJson(res, 200, {
-    quoteId,
-    atmId,
-    amountJpy,
+    ...quote,
     receivedAt: new Date().toISOString(),
     solana,
     onChain,
   });
 }
 
-const server = createServer((req, res) => {
+const server = createServer((req: IncomingMessage, res: ServerResponse) => {
   if (req.method === "POST" && req.url === "/quote-request") {
     void handleQuoteRequest(req, res);
     return;
