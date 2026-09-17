@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USDC現金化ATM — UX設計書 v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1F2EE;--paper-2:#E5E7E1;--paper-3:#D6D9D1;
+  --navy:#172B4D;--navy-deep:#0D1930;
+  --gold:#A5843C;--gold-lt:#D9BC7C;
+  --stamp:#9E2F28;--ok:#1D6B58;
+  --text:#1C2430;--muted:#5B6675;--line:#C6CAC1;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --sans:'Zen Kaku Gothic New',-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
+  font-size:17px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px}
+.prose{max-width:660px}
+p{margin:0 0 1.1em}
+h1,h2,h3,h4{line-height:1.35;margin:0}
+h2{font-size:1.9rem;font-weight:900}
+h3{font-size:1.25rem;font-weight:700;margin:2.4em 0 .7em}
+h4{font-size:1rem;font-weight:700;margin:1.9em 0 .5em}
+code{font-family:var(--mono);font-size:.87em;background:var(--paper-2);padding:.1em .35em;border-radius:2px}
+a{color:var(--navy)}
+
+/* hero */
+.hero{background:var(--navy-deep);color:#EDEFF3;padding:70px 0 0;position:relative}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold)}
+.doctype{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;color:var(--gold-lt);margin-bottom:24px}
+.hero h1{font-size:clamp(1.95rem,4.8vw,3.1rem);font-weight:900;letter-spacing:-.015em;max-width:17em}
+.hero .sub{max-width:36em;color:#A9B3C4;margin-top:20px;font-size:1.02rem}
+.tracks{margin-top:52px;padding-top:30px;border-top:1px solid rgba(217,188,124,.28);display:grid;grid-template-columns:1fr 1fr;gap:0}
+.track{padding:22px 28px 26px;border-right:1px solid rgba(255,255,255,.1)}
+.track:last-child{border-right:0}
+.track .tag{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--gold-lt)}
+.track h3{margin:9px 0 4px;font-size:1.1rem;color:#EDEFF3;font-weight:700}
+.track .cond{font-size:.82rem;color:#7F8CA3;font-family:var(--mono);margin-bottom:14px}
+.track ul{margin:0;padding-left:1.1em;font-size:.86rem;color:#A9B3C4;line-height:1.75}
+.track li{margin-bottom:.35em}
+.track li::marker{color:var(--gold)}
+.hero-foot{margin-top:34px;padding:20px 0 42px;font-size:.86rem;color:#7F8CA3;max-width:46em}
+
+/* toc */
+.toc{background:#fff;border-bottom:1px solid var(--line);padding:20px 0}
+.toc ol{display:flex;flex-wrap:wrap;gap:0 28px;margin:0;padding:0;list-style:none;font-size:.84rem;font-family:var(--mono)}
+.toc li{margin:0}
+.toc a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+.toc a:hover{color:var(--navy);border-bottom-color:var(--gold)}
+
+section{padding:78px 0}
+section:nth-of-type(even){background:var(--paper-2)}
+.chev{font-family:var(--mono);color:var(--gold);font-size:.9rem;letter-spacing:.1em;display:block;margin-bottom:12px}
+.lede{font-size:1.06rem;color:#3B4552;max-width:38em;margin-top:16px}
+.mark{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;padding:3px 9px;border-radius:2px;vertical-align:middle;margin-left:10px;font-weight:600}
+.mark.a{background:var(--navy);color:#fff}
+.mark.b{background:var(--ok);color:#fff}
+.mark.c{background:var(--gold);color:#0D1930}
+
+.tbl{width:100%;border-collapse:collapse;margin-top:26px;font-size:.87rem;background:#fff;border:1px solid var(--line)}
+.tbl th{background:var(--navy);color:#fff;text-align:left;padding:11px 14px;font-weight:700;font-size:.82rem;vertical-align:top}
+.tbl td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top;line-height:1.72}
+.tbl tr:nth-child(even) td{background:#FBFCFA}
+.tbl .st{font-family:var(--mono);font-size:.82rem;color:var(--navy);font-weight:600;white-space:nowrap}
+.tbl .no{color:var(--stamp);font-weight:700}
+.tbl .yes{color:var(--ok);font-weight:700}
+.tbl .mid{color:var(--gold);font-weight:700}
+.tbl caption{caption-side:bottom;text-align:left;font-size:.8rem;color:var(--muted);padding-top:10px;line-height:1.7}
+
+.callout{border-left:3px solid var(--gold);background:#fff;padding:18px 22px;margin:26px 0;max-width:680px}
+.callout h4{margin-top:0}
+.callout.risk{border-left-color:var(--stamp)}
+.callout.good{border-left-color:var(--ok)}
+.callout p:last-child{margin-bottom:0}
+
+ul{padding-left:1.25em;margin:0 0 1.2em}
+li{margin-bottom:.5em;max-width:38em}
+li::marker{color:var(--gold)}
+
+.svgwrap{margin-top:30px;background:#fff;border:1px solid var(--line);overflow-x:auto;padding:8px 0}
+.svgwrap::-webkit-scrollbar{height:8px}
+.svgwrap::-webkit-scrollbar-thumb{background:var(--paper-3);border-radius:4px}
+.svgwrap svg{display:block;min-width:940px;height:auto}
+.svgwrap.narrow svg{min-width:700px}
+.svghint{font-size:.8rem;color:var(--muted);margin-top:9px;line-height:1.7}
+
+/* code payload */
+.payload{background:var(--navy-deep);color:#B9C4D6;padding:24px 26px;margin-top:26px;overflow-x:auto}
+.payload pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:2;white-space:pre}
+.payload .k{color:#8D99AD}
+.payload .hl{background:var(--gold);color:#0D1930;font-weight:600;padding:2px 3px;border-radius:2px}
+.payload .cm{color:#5D6B84}
+
+/* ATM screens */
+.atms{display:flex;gap:20px;overflow-x:auto;padding:32px 0 18px;scroll-snap-type:x proximity}
+.atms::-webkit-scrollbar{height:8px}
+.atms::-webkit-scrollbar-thumb{background:var(--paper-3);border-radius:4px}
+.atm{flex:0 0 316px;scroll-snap-align:start}
+.atm .cap{font-family:var(--mono);font-size:.76rem;color:var(--gold);margin-bottom:8px}
+.atm .capn{font-size:.83rem;color:var(--muted);line-height:1.65;margin-top:10px}
+.aframe{background:#2C3038;border-radius:8px;padding:13px 13px 28px;position:relative}
+.aframe::after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:10px;width:112px;height:6px;background:#171A20;border-radius:2px}
+.ascreen{background:#0E1930;border-radius:3px;height:248px;padding:17px;color:#E7EBF2;display:flex;flex-direction:column;font-size:12.5px;line-height:1.6}
+.ahead{font-size:14.5px;font-weight:700;margin-bottom:4px}
+.asub{font-size:10.5px;color:#8D99AD;line-height:1.65}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+.akey{background:#1E3050;border:1px solid #2F4670;border-radius:3px;padding:12px 9px;text-align:center;font-weight:700;font-size:14px}
+.akey.sel{background:var(--gold);border-color:var(--gold);color:#0E1930}
+.akey.off{opacity:.34;font-weight:500}
+.akey small{display:block;font-size:8.5px;font-weight:400;color:#9FB0CC;margin-top:3px}
+.akey.sel small{color:#4A3A14}
+.aqr{width:82px;height:82px;background:#fff;border-radius:2px;margin:9px auto 6px;position:relative}
+.aqr::before{content:"";position:absolute;inset:8px;background:
+  repeating-linear-gradient(90deg,#0E1930 0 3px,#fff 3px 6px),
+  repeating-linear-gradient(0deg,#0E1930 0 3px,transparent 3px 6px);background-blend-mode:multiply}
+.arow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.09);font-size:11.5px}
+.arow .k{color:#8D99AD}
+.arow b{font-weight:700}
+.arow.big b{font-size:16px}
+.acount{margin-top:auto;font-family:var(--mono);font-size:9.5px;color:var(--gold-lt);text-align:right}
+.acash{margin:auto;text-align:center}
+.acash .amt{font-size:28px;font-weight:900}
+.acash .lbl{font-size:10.5px;color:#8D99AD;margin-top:6px}
+.acam{margin:9px auto;width:112px;height:66px;border:1.5px dashed var(--gold);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9.5px;color:var(--gold-lt);text-align:center;line-height:1.5}
+.aspin{margin:auto;text-align:center;font-size:11.5px;color:#8D99AD}
+.aspin .dot{width:32px;height:32px;border:3px solid #2F4670;border-top-color:var(--gold);border-radius:50%;margin:0 auto 13px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* phones */
+.screens{display:flex;gap:20px;overflow-x:auto;padding:32px 0 18px;scroll-snap-type:x proximity}
+.screens::-webkit-scrollbar{height:8px}
+.screens::-webkit-scrollbar-thumb{background:var(--paper-3);border-radius:4px}
+.phone{flex:0 0 244px;scroll-snap-align:start}
+.phone .cap{font-family:var(--mono);font-size:.76rem;color:var(--gold);margin-bottom:8px}
+.phone .capn{font-size:.83rem;color:var(--muted);line-height:1.65;margin-top:10px}
+.pframe{background:var(--navy-deep);border-radius:21px;padding:8px}
+.pscreen{background:#fff;border-radius:14px;height:426px;padding:15px 14px;display:flex;flex-direction:column;font-size:12px;line-height:1.6;overflow:hidden}
+.pbar{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8.5px;color:#98A2B0;margin-bottom:13px}
+.ptitle{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:8px}
+.ptext{color:var(--muted);font-size:11px;line-height:1.7}
+.pfield{border:1px solid var(--line);border-radius:4px;padding:8px 9px;margin-top:11px;font-size:11.5px;color:#98A2B0;background:#FAFBF9}
+.pfield.filled{color:var(--text);border-color:var(--navy)}
+.pbtn{margin-top:auto;background:var(--navy);color:#fff;text-align:center;padding:11px;border-radius:5px;font-weight:700;font-size:12.5px}
+.pbtn.ghost{background:transparent;color:var(--navy);border:1px solid var(--line);margin-top:8px;font-weight:500}
+.plang{display:flex;flex-wrap:wrap;gap:5px;margin-top:13px}
+.plang span{border:1px solid var(--line);border-radius:3px;padding:4px 8px;font-size:10.5px}
+.plang span.sel{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pkv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--paper-2);font-size:11.5px}
+.pkv .k{color:var(--muted)}
+.pnote{margin-top:11px;background:#F4F6F2;border-left:2px solid var(--ok);padding:8px 9px;font-size:10px;color:#3B4552;line-height:1.65}
+.pnote.warn{border-left-color:var(--stamp)}
+.pview{background:#0D1930;border-radius:6px;flex:1;margin:11px 0;position:relative;display:flex;align-items:flex-end;padding:11px;overflow:hidden}
+.pview .page{position:absolute;left:10px;right:10px;top:20px;bottom:58px;background:#2A3A57;border-radius:3px;opacity:.55}
+.pview .guide{position:absolute;left:8px;right:8px;bottom:32px;height:48px;border:1.5px solid var(--gold);border-radius:3px;background:rgba(165,132,60,.1)}
+.pview .guide::before{content:"P<JPNYAMADA<<HANAKO<<<<";position:absolute;left:5px;top:8px;font-family:var(--mono);font-size:6.5px;color:var(--gold-lt);letter-spacing:.05em}
+.pview .guide::after{content:"TR12345678JPN9204141F330";position:absolute;left:5px;top:24px;font-family:var(--mono);font-size:6.5px;color:var(--gold-lt);letter-spacing:.05em}
+.pview .hint{position:relative;z-index:2;color:#C8D2E2;font-size:9.5px;line-height:1.6}
+.pcheck{display:flex;align-items:center;gap:6px;font-size:10.5px;margin-top:8px;color:var(--ok);font-weight:500}
+.pcheck i{width:13px;height:13px;border-radius:50%;background:var(--ok);display:inline-block;flex:0 0 13px}
+.pcheck.wait{color:var(--muted)}
+.pcheck.wait i{background:var(--paper-3)}
+
+/* verdict */
+.verdict{background:var(--navy);color:#EDEFF3;padding:28px 30px;margin-top:32px;border-left:4px solid var(--gold)}
+.verdict h3{margin:0 0 12px;color:#fff;font-size:1.18rem}
+.verdict p{color:#C0C9D8;margin-bottom:.9em;max-width:44em}
+.verdict p:last-child{margin-bottom:0}
+.verdict b{color:var(--gold-lt)}
+
+.open{border-top:1px solid var(--line);margin-top:28px}
+.openrow{display:flex;gap:18px;padding:17px 0;border-bottom:1px solid var(--line);align-items:baseline;flex-wrap:wrap}
+.openrow .q{flex:1 1 210px;font-weight:700;font-size:.97rem}
+.openrow .o{flex:0 0 auto;font-family:var(--mono);font-size:.76rem;color:var(--stamp)}
+.openrow .d{flex:1 1 330px;font-size:.86rem;color:var(--muted);line-height:1.7}
+
+footer{background:var(--navy-deep);color:#7F8CA3;padding:42px 0;font-size:.82rem}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+@media(max-width:760px){.tracks{grid-template-columns:1fr}.track{border-right:0;border-bottom:1px solid rgba(255,255,255,.1)}.track:last-child{border-bottom:0}}
+@media(max-width:600px){body{font-size:16px}section{padding:54px 0}.wrap{padding:0 20px}
+  .tbl{font-size:.79rem}.tbl th,.tbl td{padding:9px 10px}.verdict{padding:22px 20px}.toc{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}html{scroll-behavior:auto}}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="doctype">UX DESIGN / v1.0 — CONSOLIDATED</div>
+    <h1>二系統を併走させる。どちらに倒すかは、3つの調査結果が決める。</h1>
+    <p class="sub">USDCをセブン銀行ATMで日本円の現金に換えるサービスの設計書。前提が確定していない段階なので、成立条件の異なる2方式を並記します。共通部分は全体の7割を占め、どちらに倒れても無駄になりません。</p>
+
+    <div class="tracks">
+      <div class="track">
+        <div class="tag">方式 A</div>
+        <h3>自前署名方式</h3>
+        <div class="cond">要 ATMカメラ / オフライン可</div>
+        <ul>
+          <li>DAMSアプリに非カストディウォレットを内蔵</li>
+          <li>EIP-3009の署名をQRで往復させる</li>
+          <li>ブロードキャストの順序をDAMSが握る</li>
+          <li>返金がほぼ発生しない</li>
+          <li>外部事業者に依存しない</li>
+        </ul>
+      </div>
+      <div class="track">
+        <div class="tag">方式 B</div>
+        <h3>WalletConnect Pay</h3>
+        <div class="cond">要 スマホ通信 / ATM改修は最小</div>
+        <ul>
+          <li>ATMは既存どおりQRを表示するだけ</li>
+          <li>700以上のウォレットとCEX残高が対象</li>
+          <li>アプリ導入が不要</li>
+          <li>送信タイミングは制御できない</li>
+          <li>日本での提供可否が未確認</li>
+        </ul>
+      </div>
+    </div>
+    <p class="hero-foot">共通しているのは、事前登録（旅券MRZ読取）、ATM画面の骨格、払出し可否の事前確認、記録要件の扱い、異常系の考え方。方式の分岐は決済の実行部分だけに閉じています。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <ol>
+      <li><a href="#s1">01 前提</a></li>
+      <li><a href="#s2">02 共通：事前登録</a></li>
+      <li><a href="#s3">03 共通：ATM画面</a></li>
+      <li><a href="#s4">04 方式A</a></li>
+      <li><a href="#s5">05 方式B</a></li>
+      <li><a href="#s6">06 比較と分岐条件</a></li>
+      <li><a href="#s7">07 確認事項</a></li>
+    </ol>
+  </div>
+</nav>
+
+<section id="s1">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 01</span>
+    <h2>前提</h2>
+    <div class="prose"><p class="lede">4つの判断が、両方式に共通してかかっています。</p></div>
+    <table class="tbl">
+      <thead><tr><th style="width:22%">判断</th><th style="width:36%">内容</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td class="st">カストディしない</td><td>USDCは利用者のアドレスに置かれたまま。DAMSは預からない。</td><td>返金対応を構造的に避ける。日本円の預かり負債も発生させない。</td></tr>
+        <tr><td class="st">旅券は事前に1回</td><td>読取は事前登録時のみ。ATMでは読ませない。</td><td>記録要件は属性の保存であり、取引ごとの再取得は不要。ATM前で旅券を出させる動作は最大級の離脱要因になる。</td></tr>
+        <tr><td class="st">MRZ撮影で足りる</td><td>ICチップ読取ではなくカメラでのMRZ読取を採用。</td><td>ブラウザから旅券チップのAPDU通信ができず、ネイティブアプリ配布が必須になる。訪日客に入国直後のアプリ導入を求めるとファネルが折れる。</td></tr>
+        <tr><td class="st">払出しを先に確定</td><td>資産が動く前に、ATMが紙幣を出せる状態かを確認する。</td><td>現金は出たら取り消せない。この順序だけで、返金ケースを物理故障に限定できる。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>記録要件は旅券MRZの3か所で満たせる</h3>
+    <div class="prose">
+      <p>記録が必要なのは氏名・国籍・生年月日の3項目です。これらはすべて旅券下部のMRZ（機械読取領域）に固定位置で格納されています。ICAO 9303 TD3形式、2行×44文字。</p>
+    </div>
+    <div class="payload"><pre><span class="k">1行目</span>  P&lt;JPN<span class="hl">YAMADA&lt;&lt;HANAKO</span>&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+<span class="k">2行目</span>  TR12345678<span class="hl">JPN</span><span class="hl">920414</span>1F3304147&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02
+
+       <span class="cm">氏名 = 1行目 6〜44桁（姓&lt;&lt;名、39文字で打ち切り）</span>
+       <span class="cm">国籍 = 2行目 11〜13桁（ICAO 3文字コード）</span>
+       <span class="cm">生年月日 = 2行目 14〜19桁（YYMMDD、世紀情報なし）</span></pre></div>
+    <p class="svghint">重み7,3,1を巡回させるチェックディジットが旅券番号・生年月日・有効期限・全体にそれぞれ付いている。生年月日を1文字誤読すれば90%の確率でその場で検出できるため、撮影UIにシャッターボタンを置かずに済む。</p>
+
+    <div class="callout risk">
+      <h4>MRZ読取は本人性を検証しない</h4>
+      <p>券面に印字された文字列を読むだけであり、旅券の真正性も、提示者が名義人であることも検証しません。ICチップのBAC/PACE認証を通せば前者は検証できますが、それにはネイティブアプリが必要です。この設計は<strong>記録要件を満たすことを目的とし、偽造検知は目的としていません</strong>。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 02</span>
+    <h2>共通：事前登録</h2>
+    <div class="prose"><p class="lede">ブラウザで完結。アプリのインストールを求めない。旅券の撮影は、シャッターボタンを押させない。</p></div>
+
+    <div class="screens">
+      <div class="phone">
+        <div class="cap">S1</div>
+        <div class="pframe"><div class="pscreen">
+          <div class="pbar"><span>9:41</span><span>no service</span></div>
+          <div class="ptitle">USDCを、日本円の現金に</div>
+          <p class="ptext">全国のセブン銀行ATMで受け取れます。銀行口座は不要です。</p>
+          <div class="plang"><span class="sel">English</span><span>日本語</span><span>中文</span><span>한국어</span><span>ภาษาไทย</span></div>
+          <div class="pnote">空港の両替所と違い、レートは画面で確定してから紙幣が出ます。</div>
+          <div class="pbtn">はじめる</div>
+          <div class="pbtn ghost">対応ATMを探す</div>
+        </div></div>
+        <p class="capn">言語選択を最初に置く。到着直後に開かれる前提で、通信が細くても崩れない構成にする。</p>
+      </div>
+
+      <div class="phone">
+        <div class="cap">S2</div>
+        <div class="pframe"><div class="pscreen">
+          <div class="pbar"><span>9:42</span><span>1 / 4</span></div>
+          <div class="ptitle">メールアドレス</div>
+          <p class="ptext">確認コードを送ります。受取通知と明細もここに届きます。</p>
+          <div class="pfield filled">hanaka.y@example.com</div>
+          <div class="pfield" style="margin-top:18px">確認コード 6桁</div>
+          <div class="pnote warn">海外のキャリアメールは届かないことがあります。Gmailなどの利用をおすすめします。</div>
+          <div class="pbtn">次へ</div>
+        </div></div>
+        <p class="capn">SMSではなくメールにする。海外番号へのSMS到達率は読めず、ローミング状況にも左右される。</p>
+      </div>
+
+      <div class="phone">
+        <div class="cap">S3</div>
+        <div class="pframe"><div class="pscreen">
+          <div class="pbar"><span>9:43</span><span>2 / 4</span></div>
+          <div class="ptitle">この端末を鍵にする</div>
+          <p class="ptext">パスワードの代わりに、顔認証や指紋でログインします。</p>
+          <div class="pnote">この端末をなくすと利用できなくなります。パスワードマネージャーへの保存を有効にしてください。</div>
+          <div class="pbtn">パスキーを作成</div>
+          <div class="pbtn ghost">別の端末も登録する</div>
+        </div></div>
+        <p class="capn">パスキー単独はリカバリが詰む。作成直後に2台目登録と同期の確認を必ず挟む。ATM前でログインできない状態が最悪の結末になる。</p>
+      </div>
+
+      <div class="phone">
+        <div class="cap">S4</div>
+        <div class="pframe"><div class="pscreen">
+          <div class="pbar"><span>9:44</span><span>3 / 4</span></div>
+          <div class="ptitle">旅券の下2行を写す</div>
+          <div class="pview">
+            <div class="page"></div><div class="guide"></div>
+            <div class="hint">枠に下2行を合わせてください。<br>自動で読み取ります。</div>
+          </div>
+          <div class="pcheck"><i></i>文字列を検出</div>
+          <div class="pcheck wait"><i></i>照合中（3回一致で確定）</div>
+        </div></div>
+        <p class="capn">ガイド枠はMRZ帯だけを囲む。シャッターボタンは置かず、チェックディジット検証が3フレーム連続で通った時点で自動確定する。</p>
+      </div>
+
+      <div class="phone">
+        <div class="cap">S5</div>
+        <div class="pframe"><div class="pscreen">
+          <div class="pbar"><span>9:44</span><span>3 / 4</span></div>
+          <div class="ptitle">この内容で登録します</div>
+          <div class="pkv"><span class="k">氏名</span><b>YAMADA HANAKO</b></div>
+          <div class="pkv"><span class="k">国籍</span><b>JPN</b></div>
+          <div class="pkv"><span class="k">生年月日</span><b>1992-04-14</b></div>
+          <div class="pnote">記録するのはこの3項目だけです。撮影した画像は端末内で処理され、保存も送信もされません。</div>
+          <div class="pbtn">この内容で進む</div>
+          <div class="pbtn ghost">撮り直す</div>
+        </div></div>
+        <p class="capn">生年月日の世紀はここで確定させる。有効期限から推定できるが、最終判断はユーザーの目視に委ねる。</p>
+      </div>
+
+      <div class="phone">
+        <div class="cap">S6</div>
+        <div class="pframe"><div class="pscreen">
+          <div class="pbar"><span>9:46</span><span>4 / 4</span></div>
+          <div class="ptitle">ウォレットを登録</div>
+          <p class="ptext">お支払いに使うアドレスを紐付けます。複数登録できます。</p>
+          <div class="pfield filled" style="font-family:var(--mono);font-size:9.5px;line-height:1.7;word-break:break-all">0x91c4…7Ae1</div>
+          <div class="pkv"><span class="k">ネットワーク</span><b>Base</b></div>
+          <div class="pnote">残高はここでは確認しません。ATMでのお支払い時に照会します。</div>
+          <div class="pbtn">登録して完了</div>
+        </div></div>
+        <p class="capn">方式Aでは内蔵ウォレットのアドレスが自動で入る。方式Bでは既存ウォレットのアドレスを登録する。デポジット送金は不要。</p>
+      </div>
+    </div>
+
+    <h3>MRZ読取の実装で詰まる箇所</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:22%">問題</th><th style="width:36%">内容</th><th>対処</th></tr></thead>
+      <tbody>
+        <tr><td class="st">ラミネート反射</td><td>保護フィルムが光源を反射し、MRZ帯が白飛びする。読取失敗の最大要因。</td><td>フラッシュを強制オフ。輝度ヒストグラムを監視し、飛んでいたら傾けるよう促す。複数フレームの多数決で確定。</td></tr>
+        <tr><td class="st">世紀の曖昧さ</td><td>生年月日は<code>YYMMDD</code>のみで、1900年代か2000年代かの情報がない。</td><td>有効期限から範囲を絞り、確認画面で西暦4桁を表示して目視させる。自動確定させない。</td></tr>
+        <tr><td class="st">氏名の打ち切り</td><td>氏名欄は39文字。長い氏名は途中で切られ、ミドルネームが欠落する。</td><td>券面のとおりに記録する仕様であることを明示。打ち切り時は確認画面で注記する。</td></tr>
+        <tr><td class="st">文字の混同</td><td>OCR-Bでも <code>0/O</code>、<code>1/I</code>、<code>5/S</code>、<code>8/B</code> の誤読が起きる。</td><td>桁ごとに期待される文字種が決まっているため候補を制限する。残りはチェックディジットで弾く。</td></tr>
+        <tr><td class="st">端末側の処理</td><td>画像をサーバに送ると、通信が細い環境で待ち時間が発生する。</td><td>WebAssembly版のMRZ SDKでブラウザ内完結にする。画像が端末を出ないため確認画面でその旨を伝えられる。</td></tr>
+        <tr><td class="st">旧様式・他国旅券</td><td>2020年2月以前の旅券や、日本以外の旅券も対象になる。</td><td>MRZ仕様は共通のため差分はない。一部の国は任意欄の使い方が異なるが、3項目の取得には影響しない。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 03</span>
+    <h2>共通：ATM画面</h2>
+    <div class="prose"><p class="lede">入口と出口は両方式で同じ。分岐するのは、真ん中の決済部分だけです。</p></div>
+
+    <div class="atms">
+      <div class="atm">
+        <div class="cap">A1 — 共通</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="ahead">お取引を選んでください</div>
+          <div class="agrid">
+            <div class="akey off" style="font-size:11.5px">お引出し<small>キャッシュカード</small></div>
+            <div class="akey off" style="font-size:11.5px">お預入れ<small>キャッシュカード</small></div>
+            <div class="akey sel" style="font-size:11.5px">USDCを現金に<small>Cash from USDC</small></div>
+            <div class="akey off" style="font-size:11.5px">その他<small>Other services</small></div>
+          </div>
+          <div class="acount">STEP 1</div>
+        </div></div>
+        <p class="capn">既存の取引選択にエントリを追加。この階層から英語を併記する。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A2 — 共通</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="ahead">お受取金額</div>
+          <p class="asub">Select the amount you want to receive.</p>
+          <div class="agrid">
+            <div class="akey">￥10,000</div>
+            <div class="akey sel">￥30,000</div>
+            <div class="akey">￥50,000</div>
+            <div class="akey off">￥100,000<small>お取扱いできません</small></div>
+          </div>
+          <div class="acount">STEP 2</div>
+        </div></div>
+        <p class="capn">残高照会の前に選ばせる。不足の判定は決済段階で行う。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A3 — 共通</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="ahead">この内容でよろしいですか</div>
+          <div class="arow"><span class="k">お支払い</span><b>206.14 USDC</b></div>
+          <div class="arow"><span class="k">レート</span><b>1 USDC = ￥148.62</b></div>
+          <div class="arow"><span class="k">手数料</span><b>￥440</b></div>
+          <div class="arow big"><span class="k">お受取</span><b>￥30,000</b></div>
+          <div class="acount">STEP 3</div>
+        </div></div>
+        <p class="capn">レートはここで確定する。方式Aでは署名対象のvalue、方式Bでは決済作成時の請求額になる。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A4a — 方式A</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="ahead">アプリで読み取る</div>
+          <div class="aqr"></div>
+          <p class="asub" style="text-align:center">アプリのカメラでこのコードを読み取り、<br>内容を確認して承認してください</p>
+          <div class="acount">残り 02:41</div>
+        </div></div>
+        <p class="capn">署名要求のQR。domain・message一式で約200バイト、静的QR1枚に収まる。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A5a — 方式A</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="ahead">承認済みのコードをかざす</div>
+          <div class="acam">読み取り機に<br>画面を向けてください</div>
+          <p class="asub" style="text-align:center">画面の明るさを最大にしてください<br>Set your screen to maximum brightness</p>
+          <div class="acount">STEP 5</div>
+        </div></div>
+        <p class="capn"><strong>方式A固有。</strong>署名は65バイト。ATM側にカメラが必要になるのはこの画面のためだけ。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A4b — 方式B</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="ahead">ウォレットで読み取る</div>
+          <div class="aqr"></div>
+          <p class="asub" style="text-align:center">お使いのウォレットアプリで<br>このコードを読み取ってください</p>
+          <div class="acount">残り 04:12</div>
+        </div></div>
+        <p class="capn"><strong>方式B固有。</strong>QRは1回きり。署名はリレー経由で戻るため、ATM側の読取機構は不要。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A6 — 共通</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="aspin"><div class="dot"></div>確認しています<br><span style="font-size:9.5px">Verifying</span></div>
+        </div></div>
+        <p class="capn">方式Aは約4秒。方式Bはチェーン次第で2〜30秒。この差がチェーン選択の理由になる。</p>
+      </div>
+
+      <div class="atm">
+        <div class="cap">A7 — 共通</div>
+        <div class="aframe"><div class="ascreen">
+          <div class="acash"><div class="amt">￥30,000</div><div class="lbl">紙幣をお取りください</div></div>
+          <div class="arow" style="border:0"><span class="k" style="font-size:9.5px">明細はご登録のメールにも送信しました</span></div>
+        </div></div>
+        <p class="capn">明細票の印刷は既定でオフ。メール送信を標準とする。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 04</span>
+    <h2>方式A：自前署名方式<span class="mark a">ATMカメラ必要</span></h2>
+    <div class="prose">
+      <p class="lede">USDCのコントラクトが実装するEIP-3009を使い、ATMの前で署名だけをさせる。トランザクションの送信はDAMSが握る。</p>
+      <p>紙幣を出せなかったなら署名を捨てるだけでよく、資産は一度も動きません。ガス代はDAMSが負担するため、利用者はUSDCだけを持っていればよく、ネイティブトークンを用意する必要がありません。</p>
+    </div>
+
+    <div class="payload"><pre><span class="k">domain</span>: {
+  name:              <span class="k">"USD Coin"</span>
+  version:           <span class="k">"2"</span>
+  chainId:           <span class="hl">8453</span>   <span class="cm">// Base — 署名対象なのでチェーン誤りが起きない</span>
+  verifyingContract: <span class="k">0x8335…2913</span>
+}
+<span class="k">primaryType</span>: <span class="hl">ReceiveWithAuthorization</span>  <span class="cm">// Transferではなくこちら</span>
+<span class="k">message</span>: {
+  from:        <span class="k">0x91c4…7Ae1</span>  <span class="cm">// 利用者</span>
+  to:          <span class="k">0x7A3f…c19B</span>  <span class="cm">// DAMS</span>
+  value:       <span class="hl">206140000</span>  <span class="cm">// 206.14 USDC — 署名がレートロックの実体</span>
+  validAfter:  <span class="k">0</span>
+  validBefore: <span class="hl">1772605380</span> <span class="cm">// +180秒で自動失効</span>
+  nonce:       <span class="k">0x4f8a…1d02</span>  <span class="cm">// DAMSが生成する32バイト乱数</span>
+}</pre></div>
+    <p class="svghint"><code>ReceiveWithAuthorization</code> は呼び出し元が受取人と一致することを要求するため、署名QRを第三者に撮影されても、そのまま実行されることはない。</p>
+
+    <h3>シーケンス</h3>
+    <div class="svgwrap">
+<svg viewBox="0 0 1080 1052" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="方式Aのシーケンス図">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#172B4D"/></marker>
+    <marker id="arwg" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8C6E32"/></marker>
+    <style>
+      .hd{fill:#172B4D}
+      .hdt{font:600 12.5px 'Zen Kaku Gothic New',sans-serif;fill:#fff;text-anchor:middle}
+      .ll{stroke:#C6CAC1;stroke-width:1;stroke-dasharray:3 5}
+      .msg{stroke:#172B4D;stroke-width:1.4;fill:none}
+      .ret{stroke:#172B4D;stroke-width:1.2;fill:none;stroke-dasharray:5 4}
+      .cri{stroke:#8C6E32;stroke-width:1.9;fill:none}
+      .lb{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:middle}
+      .lbg{font:600 11.5px 'Zen Kaku Gothic New',sans-serif;fill:#7A5F26;text-anchor:middle}
+      .lbs{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:start}
+      .num{font:600 10.5px 'IBM Plex Mono',monospace;fill:#A5843C;text-anchor:middle}
+      .band{fill:#A5843C;opacity:.075}
+      .bandt{font:600 10.5px 'IBM Plex Mono',monospace;fill:#8C6E32;letter-spacing:.1em}
+    </style>
+  </defs>
+  <rect class="band" x="44" y="670" width="990" height="156"/>
+  <text class="bandt" x="1056" y="748" transform="rotate(90,1056,748)" text-anchor="middle">ORDER MATTERS</text>
+
+  <rect class="hd" x="60"  y="8" width="120" height="32" rx="2"/><text class="hdt" x="120" y="29">利用者</text>
+  <rect class="hd" x="240" y="8" width="120" height="32" rx="2"/><text class="hdt" x="300" y="29">アプリ</text>
+  <rect class="hd" x="450" y="8" width="120" height="32" rx="2"/><text class="hdt" x="510" y="29">ATM</text>
+  <rect class="hd" x="665" y="8" width="160" height="32" rx="2"/><text class="hdt" x="745" y="29">DAMS Backend</text>
+  <rect class="hd" x="900" y="8" width="120" height="32" rx="2"/><text class="hdt" x="960" y="29">Base</text>
+
+  <line class="ll" x1="120" y1="40" x2="120" y2="1030"/><line class="ll" x1="300" y1="40" x2="300" y2="1030"/>
+  <line class="ll" x1="510" y1="40" x2="510" y2="1030"/><line class="ll" x1="745" y1="40" x2="745" y2="1030"/>
+  <line class="ll" x1="960" y1="40" x2="960" y2="1030"/>
+
+  <text class="num" x="22" y="84">01</text><line class="msg" x1="120" y1="80" x2="510" y2="80" marker-end="url(#arw)"/><text class="lb" x="315" y="74">「USDCを現金に」を選択</text>
+  <text class="num" x="22" y="122">02</text><line class="msg" x1="120" y1="118" x2="510" y2="118" marker-end="url(#arw)"/><text class="lb" x="315" y="112">受取金額 ￥30,000 を選択</text>
+  <text class="num" x="22" y="160">03</text><line class="msg" x1="510" y1="156" x2="745" y2="156" marker-end="url(#arw)"/><text class="lb" x="627" y="150">クォート要求</text>
+  <text class="num" x="22" y="198">04</text><path class="msg" d="M745 188 h52 v18 h-52" marker-end="url(#arw)"/><text class="lbs" x="805" y="202">レート確定・value算出・nonce生成</text>
+  <text class="num" x="22" y="236">05</text><line class="ret" x1="745" y1="232" x2="510" y2="232" marker-end="url(#arw)"/><text class="lb" x="627" y="226">署名要求（EIP-712 payload）</text>
+  <text class="num" x="22" y="274">06</text><line class="msg" x1="510" y1="270" x2="120" y2="270" marker-end="url(#arw)"/><text class="lb" x="315" y="264">確認画面 → 署名QRを表示</text>
+  <text class="num" x="22" y="312">07</text><line class="msg" x1="120" y1="308" x2="300" y2="308" marker-end="url(#arw)"/><text class="lb" x="210" y="302">QRを読み取る</text>
+  <text class="num" x="22" y="350">08</text><path class="msg" d="M300 340 h52 v18 h-52" marker-end="url(#arw)"/><text class="lbs" x="360" y="354">支払額と受取額を人間可読で表示</text>
+  <text class="num" x="22" y="388">09</text><line class="msg" x1="120" y1="384" x2="300" y2="384" marker-end="url(#arw)"/><text class="lb" x="210" y="378">承認（生体認証）</text>
+  <text class="num" x="22" y="426">10</text><path class="msg" d="M300 416 h52 v18 h-52" marker-end="url(#arw)"/><text class="lbs" x="360" y="430">署名を生成（通信不要）</text>
+  <text class="num" x="22" y="464">11</text><line class="msg" x1="300" y1="460" x2="510" y2="460" marker-end="url(#arw)"/><text class="lb" x="405" y="454">署名QRを提示 / ATMカメラが読取</text>
+  <text class="num" x="22" y="502">12</text><line class="msg" x1="510" y1="498" x2="745" y2="498" marker-end="url(#arw)"/><text class="lb" x="627" y="492">署名 v, r, s を転送</text>
+  <text class="num" x="22" y="540">13</text><path class="msg" d="M745 530 h52 v18 h-52" marker-end="url(#arw)"/><text class="lbs" x="805" y="544">ecrecover でアドレスを復元</text>
+  <text class="num" x="22" y="578">14</text><path class="msg" d="M745 568 h52 v18 h-52" marker-end="url(#arw)"/><text class="lbs" x="805" y="582">アカウント照合・記録3項目を取得</text>
+  <text class="num" x="22" y="616">15</text><line class="msg" x1="745" y1="612" x2="960" y2="612" marker-end="url(#arw)"/><text class="lb" x="852" y="606">balanceOf / isBlacklisted</text>
+  <text class="num" x="22" y="654">16</text><line class="ret" x1="960" y1="650" x2="745" y2="650" marker-end="url(#arw)"/><text class="lb" x="852" y="644">残高・制裁状態 OK</text>
+  <text class="num" x="22" y="692">17</text><line class="cri" x1="745" y1="688" x2="510" y2="688" marker-end="url(#arwg)"/><text class="lbg" x="627" y="682">払出し可否の事前確認</text>
+  <text class="num" x="22" y="730">18</text><line class="ret" x1="510" y1="726" x2="745" y2="726" marker-end="url(#arw)"/><text class="lb" x="627" y="720">カセット残量・金種在庫 OK</text>
+  <text class="num" x="22" y="768">19</text><line class="cri" x1="745" y1="764" x2="960" y2="764" marker-end="url(#arwg)"/><text class="lbg" x="852" y="758">receiveWithAuthorization</text>
+  <text class="num" x="22" y="806">20</text><line class="ret" x1="960" y1="802" x2="745" y2="802" marker-end="url(#arw)"/><text class="lb" x="852" y="796">1ブロック確認（約2秒）</text>
+  <text class="num" x="22" y="844">21</text><line class="msg" x1="745" y1="840" x2="510" y2="840" marker-end="url(#arw)"/><text class="lb" x="627" y="834">排出指示</text>
+  <text class="num" x="22" y="882">22</text><line class="msg" x1="510" y1="878" x2="120" y2="878" marker-end="url(#arw)"/><text class="lb" x="315" y="872">紙幣を排出</text>
+  <text class="num" x="22" y="920">23</text><path class="msg" d="M745 910 h52 v18 h-52" marker-end="url(#arw)"/><text class="lbs" x="805" y="924">取引確定記録（3項目スナップショット）</text>
+  <text class="num" x="22" y="958">24</text><line class="msg" x1="745" y1="954" x2="120" y2="954" marker-end="url(#arw)"/><text class="lb" x="432" y="948">明細メールを送信</text>
+
+  <line x1="44" y1="998" x2="1034" y2="998" stroke="#C6CAC1" stroke-width="1"/>
+  <text class="lbs" x="44" y="1018" style="font-size:11px;fill:#5B6675">実線＝要求　破線＝応答　金色＝順序が結果を左右する区間（17〜20）</text>
+</svg>
+    </div>
+    <p class="svghint">17と19の間に18が入っていることが要点。払出しの可否を確定させてからトランザクションを送るため、資産が動いた後に現金が出せない状態がほぼ発生しない。</p>
+
+    <h3>実装上の注意</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:24%">項目</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td class="st">nonce消費≠入金完了</td><td><strong>最重要。</strong>署名者は自分のnonceを焼けます。<code>cancelAuthorization</code>を呼ぶか、同じnonceを自己送金で消費してリレーヤーとレースすればいい。結果、nonceは「使用済み」と読めるのに資金は届いていない状態が起こります。決済確認に <code>authorizationState</code> を使わず、必ずトランザクションのレシートとTransferイベントで判定してください。</td></tr>
+        <tr><td class="st">ネイティブUSDCのみ</td><td>Polygonのブリッジ版USDC（USD Coin (PoS)）はEIP-3009非互換で <code>transferWithAuthorization</code> が使えません。Circle発行のネイティブUSDCに限定し、アプリ側でトークンアドレスを固定します。</td></tr>
+        <tr><td class="st">ハードウェアウォレット不可</td><td>MetaMask経由のTrezorやLedgerは <code>personal_sign</code> のみで、EIP-712署名ができません。このフローから外れるため、エラー時の案内文言を用意します。</td></tr>
+        <tr><td class="st">EIP-1271 / 6492</td><td>スマートコントラクトウォレットからの署名はECDSAではなくEIP-1271で検証します。カウンターファクチュアルなウォレットにはEIP-6492が要ります。内蔵ウォレットをEOAで作るなら当面不要。</td></tr>
+        <tr><td class="st">送信アカウントの並列度</td><td>単一のEOAから送信するとnonce競合でスループットが頭打ちになります。送信用アカウントをプール化し、ATM単位またはシャード単位で割り当てます。</td></tr>
+        <tr><td class="st">署名画面の可読性</td><td>内蔵ウォレットを採る最大の理由。「206.14 USDCを支払い、￥30,000を受け取る」と日英で表示し、16進数のアドレスやtyped dataの生データを見せません。</td></tr>
+        <tr><td class="st">QRの物理条件</td><td>署名要求は約200バイト、署名は65バイト。いずれも静的QR1枚に収まります。誤り訂正レベルはH。ATM画面のガラス反射とスマホ画面への近接ピントが実地の主な失敗要因です。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>失敗はほとんど資産が動く前に起きる</h3>
+    <div class="svgwrap narrow">
+<svg viewBox="0 0 1000 214" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="方式Aの離脱点と資産移動の関係">
+  <defs><style>
+    .zg{fill:#1D6B58;opacity:.09} .zr{fill:#9E2F28;opacity:.09}
+    .spine{stroke:#172B4D;stroke-width:2}
+    .drop{stroke:#8B95A3;stroke-width:1.1;stroke-dasharray:3 3}
+    .dropr{stroke:#9E2F28;stroke-width:1.4}
+    .zt{font:600 11px 'Zen Kaku Gothic New',sans-serif;text-anchor:middle}
+    .ex{font:10.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:middle}
+    .exr{font:600 10.5px 'Zen Kaku Gothic New',sans-serif;fill:#9E2F28;text-anchor:middle}
+    .sm{font:11px 'Zen Kaku Gothic New',sans-serif;text-anchor:middle}
+    .dv{stroke:#A5843C;stroke-width:1.6;stroke-dasharray:4 4}
+    .dvt{font:600 10px 'IBM Plex Mono',monospace;fill:#8C6E32;text-anchor:middle}
+  </style></defs>
+  <rect class="zg" x="30" y="42" width="728" height="32" rx="2"/>
+  <rect class="zr" x="792" y="42" width="178" height="32" rx="2"/>
+  <text class="zt" x="394" y="32" fill="#1D6B58">資産は動いていない</text>
+  <text class="zt" x="881" y="32" fill="#9E2F28">資産が動いた後</text>
+  <line class="spine" x1="30" y1="58" x2="970" y2="58"/>
+  <line class="dv" x1="775" y1="20" x2="775" y2="185"/>
+  <text class="dvt" x="775" y="14">tx SUBMIT</text>
+  <g>
+    <circle cx="76"  cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="76"  y1="62" x2="76"  y2="96"/><text class="ex" x="76"  y="112">承認しない</text>
+    <circle cx="166" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="166" y1="62" x2="166" y2="124"/><text class="ex" x="166" y="140">QRが読めない</text>
+    <circle cx="256" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="256" y1="62" x2="256" y2="96"/><text class="ex" x="256" y="112">残高不足</text>
+    <circle cx="346" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="346" y1="62" x2="346" y2="124"/><text class="ex" x="346" y="140">アドレス未登録</text>
+    <circle cx="436" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="436" y1="62" x2="436" y2="96"/><text class="ex" x="436" y="112">制裁対象</text>
+    <circle cx="526" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="526" y1="62" x2="526" y2="124"/><text class="ex" x="526" y="140">署名の期限切れ</text>
+    <circle cx="620" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="620" y1="62" x2="620" y2="96"/><text class="ex" x="620" y="112">払出し不可</text>
+    <circle cx="716" cy="58" r="4" fill="#1D6B58"/><line class="drop" x1="716" y1="62" x2="716" y2="124"/><text class="ex" x="716" y="140">tx が revert</text>
+  </g>
+  <circle cx="881" cy="58" r="5" fill="#9E2F28"/>
+  <line class="dropr" x1="881" y1="63" x2="881" y2="96"/>
+  <text class="exr" x="881" y="112">紙幣ジャム</text><text class="exr" x="881" y="128">USDCで返金</text>
+  <text class="sm" x="394" y="176" fill="#1D6B58">署名を破棄して終了。利用者の資産は一度も動かず、返金処理は発生しない。</text>
+  <text class="sm" x="881" y="176" fill="#9E2F28">唯一の返金ケース</text>
+  <text class="sm" x="394" y="200" fill="#5B6675" style="font-size:10.5px">損失はガス代のみ（revert 時）</text>
+</svg>
+    </div>
+  </div>
+</section>
+
+<section id="s5">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 05</span>
+    <h2>方式B：WalletConnect Pay<span class="mark b">ATM改修は最小</span></h2>
+    <div class="prose">
+      <p class="lede">加盟店として決済を作成し、リンクをQRとして表示するだけ。ATM側の追加ハードウェアは要りません。</p>
+      <p>WalletConnectは700以上のウォレット、5億人以上のユーザーをつなぐネットワークで、2025年の取引額は4,000億ドル超。WalletConnect Payはその上に載る決済プロダクトです。標準フローはEIP-3009のtyped-dataペイロードに署名させる方式で、方式Aと暗号面では同じ仕組みを使います。</p>
+      <p><strong>前例として、Ingenicoが2026年1月に実店舗POSへ導入しています。</strong>ハードウェア変更は不要で、Androidの決済端末へのソフトウェア配信だけで済んだと報じられています。セブン銀行との協議では、この事例が説得材料になります。</p>
+    </div>
+
+    <h3>3層構造。DAMSがどこに座るか</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:26%">レイヤー</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td class="st">WalletConnect Pay</td><td>ネットワーク、決済実行、精算基盤。</td></tr>
+        <tr><td class="st">Enabling Party（PSP）</td><td>加盟店を束ねる。WCPネットワーク手数料はWCPとこの層の間で別途の商業契約により合意され、<strong>WCPは原則として加盟店と直接の手数料関係を持たない</strong>とされています。</td></tr>
+        <tr><td class="st">加盟店</td><td>実際に決済を受ける事業者。DAMSが単純に入るならここ。</td></tr>
+      </tbody>
+      <caption>DAMSが加盟店として入るのか、日本のEnabling Partyになるのかは別の戦略判断。後者ならATM1件ではなく、日本国内でWalletConnect Pay決済を提供する立場になる。</caption>
+    </table>
+
+    <h3>シーケンス</h3>
+    <div class="svgwrap">
+<svg viewBox="0 0 1080 872" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="方式Bのシーケンス図">
+  <defs>
+    <marker id="b1" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#172B4D"/></marker>
+    <marker id="b2" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8C6E32"/></marker>
+    <marker id="b3" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9E2F28"/></marker>
+    <style>
+      .hd2{fill:#172B4D}
+      .hdt2{font:600 12px 'Zen Kaku Gothic New',sans-serif;fill:#fff;text-anchor:middle}
+      .ll2{stroke:#C6CAC1;stroke-width:1;stroke-dasharray:3 5}
+      .msg2{stroke:#172B4D;stroke-width:1.4;fill:none}
+      .ret2{stroke:#172B4D;stroke-width:1.2;fill:none;stroke-dasharray:5 4}
+      .cri2{stroke:#8C6E32;stroke-width:1.9;fill:none}
+      .out2{stroke:#9E2F28;stroke-width:1.7;fill:none}
+      .lb2{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:middle}
+      .lbg2{font:600 11.5px 'Zen Kaku Gothic New',sans-serif;fill:#7A5F26;text-anchor:middle}
+      .lbr2{font:600 11.5px 'Zen Kaku Gothic New',sans-serif;fill:#9E2F28;text-anchor:middle}
+      .lbs2{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:start}
+      .num2{font:600 10.5px 'IBM Plex Mono',monospace;fill:#A5843C;text-anchor:middle}
+      .bg2{fill:#A5843C;opacity:.09} .br2{fill:#9E2F28;opacity:.07}
+      .bt2{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.09em}
+    </style>
+  </defs>
+  <rect class="bg2" x="44" y="182" width="990" height="80"/>
+  <rect class="br2" x="44" y="562" width="990" height="42"/>
+
+  <rect class="hd2" x="60"  y="8" width="118" height="32" rx="2"/><text class="hdt2" x="119" y="29">利用者</text>
+  <rect class="hd2" x="238" y="8" width="128" height="32" rx="2"/><text class="hdt2" x="302" y="29">ウォレット</text>
+  <rect class="hd2" x="452" y="8" width="118" height="32" rx="2"/><text class="hdt2" x="511" y="29">ATM</text>
+  <rect class="hd2" x="665" y="8" width="158" height="32" rx="2"/><text class="hdt2" x="744" y="29">DAMS Backend</text>
+  <rect class="hd2" x="882" y="8" width="150" height="32" rx="2"/><text class="hdt2" x="957" y="29">WalletConnect Pay</text>
+
+  <line class="ll2" x1="119" y1="40" x2="119" y2="852"/><line class="ll2" x1="302" y1="40" x2="302" y2="852"/>
+  <line class="ll2" x1="511" y1="40" x2="511" y2="852"/><line class="ll2" x1="744" y1="40" x2="744" y2="852"/>
+  <line class="ll2" x1="957" y1="40" x2="957" y2="852"/>
+
+  <text class="num2" x="22" y="82">01</text><line class="msg2" x1="119" y1="78" x2="511" y2="78" marker-end="url(#b1)"/><text class="lb2" x="315" y="72">「USDCを現金に」→ 受取金額 ￥30,000 を選択</text>
+  <text class="num2" x="22" y="120">02</text><line class="msg2" x1="511" y1="116" x2="744" y2="116" marker-end="url(#b1)"/><text class="lb2" x="627" y="110">クォート要求</text>
+  <text class="num2" x="22" y="158">03</text><path class="msg2" d="M744 148 h52 v18 h-52" marker-end="url(#b1)"/><text class="lbs2" x="804" y="162">レート確定・スプレッド込みの請求額を算出</text>
+  <text class="num2" x="22" y="200">04</text><line class="cri2" x1="744" y1="196" x2="511" y2="196" marker-end="url(#b2)"/><text class="lbg2" x="627" y="190">払出し可否の事前確認</text>
+  <text class="num2" x="22" y="238">05</text><line class="ret2" x1="511" y1="234" x2="744" y2="234" marker-end="url(#b1)"/><text class="lb2" x="627" y="228">カセット残量・金種在庫 OK</text>
+  <text class="num2" x="22" y="276">06</text><line class="msg2" x1="744" y1="272" x2="957" y2="272" marker-end="url(#b1)"/><text class="lb2" x="850" y="266">POST /v1/payments</text>
+  <text class="num2" x="22" y="314">07</text><line class="ret2" x1="957" y1="310" x2="744" y2="310" marker-end="url(#b1)"/><text class="lb2" x="850" y="304">決済ID・支払いリンク</text>
+  <text class="num2" x="22" y="352">08</text><line class="msg2" x1="744" y1="348" x2="511" y2="348" marker-end="url(#b1)"/><text class="lb2" x="627" y="342">リンクをQRとして表示</text>
+  <text class="num2" x="22" y="390">09</text><line class="msg2" x1="119" y1="386" x2="302" y2="386" marker-end="url(#b1)"/><text class="lb2" x="210" y="380">QRをスキャン</text>
+  <text class="num2" x="22" y="428">10</text><line class="msg2" x1="302" y1="424" x2="957" y2="424" marker-end="url(#b1)"/><text class="lb2" x="629" y="418">getPaymentOptions（保有資産に応じた支払い候補）</text>
+  <text class="num2" x="22" y="466">11</text><line class="msg2" x1="119" y1="462" x2="302" y2="462" marker-end="url(#b1)"/><text class="lb2" x="210" y="456">支払い方法を選び承認</text>
+  <text class="num2" x="22" y="504">12</text><path class="msg2" d="M302 494 h52 v18 h-52" marker-end="url(#b1)"/><text class="lbs2" x="362" y="508">eth_signTypedData_v4 で署名</text>
+  <text class="num2" x="22" y="542">13</text><line class="msg2" x1="302" y1="538" x2="957" y2="538" marker-end="url(#b1)"/><text class="lb2" x="629" y="532">confirmPayment（署名を提出）</text>
+  <text class="num2" x="22" y="580">14</text><path class="out2" d="M957 570 h56 v18 h-56" marker-end="url(#b3)"/><text class="lbr2" x="828" y="584">ブロックチェーンへ提出（DAMSの制御外）</text>
+  <text class="num2" x="22" y="622">15</text><line class="ret2" x1="957" y1="618" x2="744" y2="618" marker-end="url(#b1)"/><text class="lb2" x="850" y="612">webhook: payment.succeeded</text>
+  <text class="num2" x="22" y="660">16</text><line class="msg2" x1="744" y1="656" x2="511" y2="656" marker-end="url(#b1)"/><text class="lb2" x="627" y="650">排出指示</text>
+  <text class="num2" x="22" y="698">17</text><line class="msg2" x1="511" y1="694" x2="119" y2="694" marker-end="url(#b1)"/><text class="lb2" x="315" y="688">紙幣を排出</text>
+  <text class="num2" x="22" y="736">18</text><path class="msg2" d="M744 726 h52 v18 h-52" marker-end="url(#b1)"/><text class="lbs2" x="804" y="740">取引確定記録（氏名・国籍・生年月日）</text>
+  <text class="num2" x="22" y="778">19</text><line class="ret2" x1="957" y1="774" x2="744" y2="774" marker-end="url(#b1)"/><text class="lb2" x="850" y="768">webhook: payment.settled</text>
+
+  <text class="bt2" x="52" y="196" fill="#8C6E32">PRE-FLIGHT</text>
+  <text class="bt2" x="52" y="576" fill="#9E2F28">OUT OF CONTROL</text>
+  <line x1="44" y1="818" x2="1034" y2="818" stroke="#C6CAC1" stroke-width="1"/>
+  <text class="lbs2" x="44" y="838" style="font-size:11px;fill:#5B6675">金色＝払出し可否を先に確定させる区間　赤＝DAMSが制御できない区間</text>
+</svg>
+    </div>
+    <p class="svghint">14がDAMSの手を離れているため、4と5を6より前に置いて失敗確率を物理故障だけに絞り込む。自前方式では排出2秒前だった確認が25秒前になるが、ATMは同時に1人しか操作しないためカセット残量は変化しない。</p>
+
+    <h3>押さえるべき数字と制約</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:24%">項目</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td class="st">加盟店手数料</td><td>WalletConnectのPSP向け解説では<strong>0.5〜1.0%</strong>とされています（カードの2.5〜3.5%との比較として提示）。￥30,000なら150〜300円。利用者側は取引手数料なしでWCTのキャッシュバックを受け取ります。ボリュームディスカウントもあるとのこと。</td></tr>
+        <tr><td class="st">確定時間 2〜30秒</td><td>オンチェーン確定はネットワークにより<strong>2〜30秒</strong>。Ethereumメインネットで払われるとATMの前で30秒沈黙します。<strong>受け付けるチェーンをBase・Optimism・Arbitrumなど高速なものに絞ってください。</strong></td></tr>
+        <tr><td class="st">法定通貨精算はUSD/EURのみ</td><td>オフランプ提携先経由での提供で、<strong>日本円の精算はありません</strong>。DAMSはUSDCで受け取り、自分で円転してATMの現金を補充します。この回転日数がそのまま運転資本になります。</td></tr>
+        <tr><td class="st">対応チェーン</td><td>ローンチ時はEthereum、Base、Polygon、Optimism、Arbitrum。Solanaはロードマップとされていましたが、現在のドキュメントにはSolana対応の実装ガイドとCAIP-19識別子が存在します。進行中とみて最新の対応表を直接確認してください。</td></tr>
+        <tr><td class="st">CEX残高から払える</td><td>中央集権取引所の統合により、利用者はCEXの口座残高から直接支払えます。自己管理ウォレットを持たない訪日客も対象にできるため、母集団が大きく広がります。</td></tr>
+        <tr><td class="st">利用者情報の収集</td><td>トラベルルール対応として氏名・生年月日を収集する仕組みがあり、ホストされたWebViewフォームで処理されます。<strong>DAMS側のMRZ読取と重複する可能性があります。</strong>二重入力を避ける整理が必要です。</td></tr>
+        <tr><td class="st">返金API</td><td>全額返金を要求するエンドポイントがあり、二重呼び出しは409で弾かれます。返金が例外処理ではなく標準機能として組み込めます。</td></tr>
+        <tr><td class="st">ガス代</td><td>ブロックチェーン側で決まり、WCPもEnabling PartyもOfframp Providerも制御しないと明記されています。高騰時の扱いは自分で設計する必要があります。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout good">
+      <h4>Tap to Pay という将来の選択肢</h4>
+      <p>POS端末が <code>pay.walletconnect.com</code> を指すURIレコードを持つNDEFタグを発信し、スマホをかざすとウォレットが起動する方式があります。iOSはバックグラウンドタグ読取により、ロック画面やホーム画面からでも自動で読み取ります。<strong>QRの読み書きが一切不要になり、体感時間が最短になります。</strong>ただしWalletConnect側で実験的機能とされ、実装前に先方チームへの連絡が求められています。ATM側のNFC発信能力が前提になるため、当面は将来の拡張として位置づけます。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s6">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 06</span>
+    <h2>比較と分岐条件</h2>
+
+    <table class="tbl">
+      <thead><tr><th style="width:26%">評価軸</th><th style="width:37%">方式A 自前署名</th><th>方式B WalletConnect Pay</th></tr></thead>
+      <tbody>
+        <tr><td class="st">ATMハード要件</td><td class="no">カメラ追加が必要</td><td class="yes">なし（QR表示のみ）</td></tr>
+        <tr><td class="st">スマホ側の通信</td><td class="yes">不要</td><td class="no">必要</td></tr>
+        <tr><td class="st">アプリ導入</td><td class="no">DAMSアプリ必須</td><td class="yes">既存ウォレットで可</td></tr>
+        <tr><td class="st">対象ユーザー</td><td class="no">アプリ導入者のみ</td><td class="yes">700以上のウォレット＋CEX利用者</td></tr>
+        <tr><td class="st">送信順序の制御</td><td class="yes">DAMSが握る</td><td class="no">WalletConnect側</td></tr>
+        <tr><td class="st">返金の発生</td><td class="yes">ほぼゼロ</td><td class="mid">低い（事前確認の前倒しで対応）</td></tr>
+        <tr><td class="st">決済手数料</td><td class="yes">ガス代のみ</td><td class="no">0.5〜1.0%＋ガス代</td></tr>
+        <tr><td class="st">確定待ち時間</td><td class="yes">約4秒（Base固定）</td><td class="mid">2〜30秒（チェーン次第）</td></tr>
+        <tr><td class="st">開発規模</td><td class="no">アプリ＋ウォレット＋リレーヤー</td><td class="yes">加盟店API連携のみ</td></tr>
+        <tr><td class="st">外部依存</td><td class="yes">なし</td><td class="no">仕様・手数料・可用性が外部判断</td></tr>
+        <tr><td class="st">ATM所要時間</td><td>約43秒</td><td>約45秒</td></tr>
+      </tbody>
+    </table>
+
+    <h3>どの調査結果で、どちらに倒れるか</h3>
+    <div class="svgwrap narrow">
+<svg viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="方式選択の分岐条件">
+  <defs>
+    <marker id="d1" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#172B4D"/></marker>
+    <style>
+      .box{fill:#fff;stroke:#172B4D;stroke-width:1.4}
+      .qt{font:600 12.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:middle}
+      .nt{font:11px 'Zen Kaku Gothic New',sans-serif;fill:#5B6675;text-anchor:start}
+      .ln{stroke:#172B4D;stroke-width:1.4;fill:none}
+      .yn{font:600 10.5px 'IBM Plex Mono',monospace;fill:#8C6E32}
+      .rt{font:600 13px 'Zen Kaku Gothic New',sans-serif;fill:#fff;text-anchor:middle}
+      .rs{font:10.5px 'Zen Kaku Gothic New',sans-serif;fill:#C0C9D8;text-anchor:middle}
+      .own{font:600 9.5px 'IBM Plex Mono',monospace;fill:#A5843C;text-anchor:start}
+    </style>
+  </defs>
+
+  <rect class="box" x="290" y="24" width="270" height="46" rx="2"/>
+  <text class="qt" x="425" y="52">日本で利用できるか</text>
+  <text class="own" x="576" y="42">WalletConnectへ照会</text>
+  <text class="nt" x="576" y="60">Enabling Partyの所在と加盟店登録の可否</text>
+
+  <rect class="box" x="290" y="130" width="270" height="46" rx="2"/>
+  <text class="qt" x="425" y="158">ATMコーナーの電波は十分か</text>
+  <text class="own" x="576" y="148">実測</text>
+  <text class="nt" x="576" y="166">地下・店舗奥を数十箇所サンプリング</text>
+
+  <rect class="box" x="290" y="236" width="270" height="46" rx="2"/>
+  <text class="qt" x="425" y="264">手数料込みで成立するか</text>
+  <text class="own" x="576" y="254">試算</text>
+  <text class="nt" x="576" y="272">0.5〜1.0%＋ガス＋ATM手数料をスプレッドで吸収できるか</text>
+
+  <rect x="290" y="340" width="270" height="52" rx="2" fill="#1D6B58"/>
+  <text class="rt" x="425" y="366">方式B を採用</text>
+  <text class="rs" x="425" y="383">ATM改修は最小、対象ユーザー最大</text>
+
+  <rect x="30" y="180" width="200" height="52" rx="2" fill="#172B4D"/>
+  <text class="rt" x="130" y="206">方式A を採用</text>
+  <text class="rs" x="130" y="223">自前で全部を握る</text>
+
+  <line class="ln" x1="425" y1="70" x2="425" y2="130" marker-end="url(#d1)"/>
+  <text class="yn" x="433" y="104">はい</text>
+  <line class="ln" x1="425" y1="176" x2="425" y2="236" marker-end="url(#d1)"/>
+  <text class="yn" x="433" y="210">はい</text>
+  <line class="ln" x1="425" y1="282" x2="425" y2="340" marker-end="url(#d1)"/>
+  <text class="yn" x="433" y="314">はい</text>
+
+  <line class="ln" x1="290" y1="47"  x2="130" y2="47"/>
+  <line class="ln" x1="290" y1="153" x2="130" y2="153"/>
+  <line class="ln" x1="290" y1="259" x2="200" y2="259"/>
+  <line class="ln" x1="200" y1="259" x2="200" y2="240"/>
+  <line class="ln" x1="130" y1="47"  x2="130" y2="180" marker-end="url(#d1)"/>
+  <line class="ln" x1="200" y1="240" x2="200" y2="232" marker-end="url(#d1)"/>
+  <text class="yn" x="243" y="41">いいえ</text>
+  <text class="yn" x="243" y="147">いいえ</text>
+  <text class="yn" x="215" y="253">いいえ</text>
+</svg>
+    </div>
+    <p class="svghint">3つのうち1つでも「いいえ」なら方式A。すべて「はい」なら方式B。共通部分は先に作り切れるため、この分岐が確定する前でも開発は進められる。</p>
+
+    <div class="verdict">
+      <h3>現時点の暫定推奨は方式B。ただし前提が1つ未確認</h3>
+      <p><b>方式BはATMへの要求がゼロです。</b>既存のスマホATMと同じ「画面にQRを出す」だけで成立するため、セブン銀行との協議で最も通しやすく、カメラ転用の可否という不確実性に設計全体が人質に取られません。対象ユーザーも桁違いに広がります。</p>
+      <p>ただし、<b>日本でWalletConnect Payが加盟店向けに提供されているかを、まだ確認できていません。</b>ドキュメントは英語圏中心で、日本のEnabling Partyの存在も見当たらず、法定通貨精算がUSD/EURのみという点も、日本市場が現時点の主戦場ではないことを示唆します。ここが「未提供」なら推奨は方式Aに戻ります。</p>
+      <p>したがって、<b>共通部分（事前登録・MRZ読取・ATM画面の骨格・払出し可否の事前確認）を先に作り切り、決済部分だけを差し替え可能な設計にしておく</b>のが最も損の少ない進め方です。認証・決済手段を抽象化したインターフェースを1枚挟んでおけば、どちらに倒れても書き直しは決済アダプタだけで済みます。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s7">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 07</span>
+    <h2>確認事項</h2>
+    <div class="open">
+      <div class="openrow"><div class="q">日本での提供可否とEnabling Party</div><div class="o">WalletConnect</div><div class="d"><strong>最優先。</strong>ここの答えで方式が決まる。セブン銀行との協議に入る前に潰す。</div></div>
+      <div class="openrow"><div class="q">日本円建ての決済作成</div><div class="o">WalletConnect</div><div class="d">決済金額の指定が <code>iso4217/USD</code> の例で示されている。<code>iso4217/JPY</code> が使えるか、使えない場合の換算経路は何か。料金設計が変わる。</div></div>
+      <div class="openrow"><div class="q">受入チェーンの限定</div><div class="o">WalletConnect</div><div class="d">高速チェーンのみを受け付ける設定が加盟店側でできるか。できないとATM前で30秒待たされる。</div></div>
+      <div class="openrow"><div class="q">情報収集データの受け渡し</div><div class="o">WalletConnect</div><div class="d">フォームが収集した氏名・生年月日が加盟店に渡るのか。国籍は収集項目に含まれるか。渡らないならMRZ読取は残す。</div></div>
+      <div class="openrow"><div class="q">決済キャンセルの有効範囲</div><div class="o">WalletConnect</div><div class="d">キャンセル用エンドポイントは署名提出後のどの段階まで有効か。ATM障害検知から間に合うか。</div></div>
+      <div class="openrow"><div class="q">払出し可否の事前照会</div><div class="o">セブン銀行</div><div class="d">カセット残量や金種在庫を排出前に照会できるか。両方式で必要。</div></div>
+      <div class="openrow"><div class="q">QR表示の自由度</div><div class="o">セブン銀行</div><div class="d">任意の文字列をQR化して画面表示できるか。既存スマホATMのQRが固定フォーマットの可能性がある。</div></div>
+      <div class="openrow"><div class="q">カメラの用途拡張</div><div class="o">セブン銀行</div><div class="d">方式A限定。第4世代ATMのFACE CASH用カメラでスマホ画面のQRを読めるか。</div></div>
+      <div class="openrow"><div class="q">ATMコーナーの電波</div><div class="o">実測</div><div class="d">方式選択そのものを左右する。設置場所を数十箇所サンプリングする。</div></div>
+      <div class="openrow"><div class="q">ユニットエコノミクス</div><div class="o">試算</div><div class="d">決済手数料、ガス代、ATM払出し手数料、円転コスト、運転資本。￥10,000の換金で成立するかを確認する。</div></div>
+      <div class="openrow"><div class="q">認知経路</div><div class="o">未着手</div><div class="d">空港・ホテル・取引所との提携。UXの外側だが、ここが埋まらないと他がすべて空振りする。</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>USDC現金化ATM — UX設計書 v1.0（v0.1〜v0.3を統合）</span>
+    <span>株式会社デジタルアセットマーケッツ</span>
+  </div>
+</footer>
+
+</body>
+</html>

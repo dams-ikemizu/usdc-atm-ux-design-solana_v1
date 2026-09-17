@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USDC現金化ATM — Solana版 UX設計書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1F2EE;--paper-2:#E5E7E1;--paper-3:#D6D9D1;
+  --navy:#172B4D;--navy-deep:#0D1930;
+  --gold:#A5843C;--gold-lt:#D9BC7C;
+  --stamp:#9E2F28;--ok:#1D6B58;
+  --text:#1C2430;--muted:#5B6675;--line:#C6CAC1;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --sans:'Zen Kaku Gothic New',-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
+  font-size:17px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px}
+.prose{max-width:660px}
+p{margin:0 0 1.1em}
+h1,h2,h3,h4{line-height:1.35;margin:0}
+h2{font-size:1.9rem;font-weight:900}
+h3{font-size:1.25rem;font-weight:700;margin:2.4em 0 .7em}
+h4{font-size:1rem;font-weight:700;margin:1.9em 0 .5em}
+code{font-family:var(--mono);font-size:.87em;background:var(--paper-2);padding:.1em .35em;border-radius:2px}
+
+.hero{background:var(--navy-deep);color:#EDEFF3;padding:70px 0 0;position:relative}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold)}
+.doctype{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;color:var(--gold-lt);margin-bottom:24px}
+.hero h1{font-size:clamp(1.95rem,4.8vw,3.1rem);font-weight:900;letter-spacing:-.015em;max-width:17em}
+.hero .sub{max-width:36em;color:#A9B3C4;margin-top:20px;font-size:1.02rem}
+.hero .note{max-width:36em;color:#7F8CA3;margin-top:14px;font-size:.9rem}
+
+.deltas{margin-top:50px;padding-top:30px;border-top:1px solid rgba(217,188,124,.28)}
+.deltas h4{font-family:var(--mono);font-size:.76rem;letter-spacing:.12em;color:var(--gold-lt);font-weight:600;margin:0 0 20px}
+.dgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:0}
+.dcell{padding:18px 26px 22px 0;border-right:1px solid rgba(255,255,255,.1)}
+.dcell:nth-child(2n){border-right:0;padding-left:26px}
+.dcell:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.1)}
+.dcell .s{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;font-weight:600}
+.dcell .s.up{color:#4FA88E}
+.dcell .s.dn{color:#C4645C}
+.dcell b{display:block;font-size:1rem;color:#EDEFF3;margin:6px 0 5px;font-weight:700}
+.dcell span{font-size:.85rem;color:#8D99AD;line-height:1.72;display:block}
+.hero-foot{margin-top:34px;padding:20px 0 42px;font-size:.86rem;color:#7F8CA3;max-width:46em}
+
+.toc{background:#fff;border-bottom:1px solid var(--line);padding:20px 0}
+.toc ol{display:flex;flex-wrap:wrap;gap:0 28px;margin:0;padding:0;list-style:none;font-size:.84rem;font-family:var(--mono)}
+.toc a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+.toc a:hover{color:var(--navy);border-bottom-color:var(--gold)}
+
+section{padding:78px 0}
+section:nth-of-type(even){background:var(--paper-2)}
+.chev{font-family:var(--mono);color:var(--gold);font-size:.9rem;letter-spacing:.1em;display:block;margin-bottom:12px}
+.lede{font-size:1.06rem;color:#3B4552;max-width:38em;margin-top:16px}
+.mark{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;padding:3px 9px;border-radius:2px;vertical-align:middle;margin-left:10px;font-weight:600}
+.mark.a{background:var(--navy);color:#fff}
+.mark.b{background:var(--ok);color:#fff}
+
+.tbl{width:100%;border-collapse:collapse;margin-top:26px;font-size:.87rem;background:#fff;border:1px solid var(--line)}
+.tbl th{background:var(--navy);color:#fff;text-align:left;padding:11px 14px;font-weight:700;font-size:.82rem;vertical-align:top}
+.tbl td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top;line-height:1.72}
+.tbl tr:nth-child(even) td{background:#FBFCFA}
+.tbl .st{font-family:var(--mono);font-size:.82rem;color:var(--navy);font-weight:600;white-space:nowrap}
+.tbl .no{color:var(--stamp);font-weight:700}
+.tbl .yes{color:var(--ok);font-weight:700}
+.tbl .mid{color:var(--gold);font-weight:700}
+.tbl caption{caption-side:bottom;text-align:left;font-size:.8rem;color:var(--muted);padding-top:10px;line-height:1.7}
+
+.callout{border-left:3px solid var(--gold);background:#fff;padding:18px 22px;margin:26px 0;max-width:680px}
+.callout h4{margin-top:0}
+.callout.risk{border-left-color:var(--stamp)}
+.callout.good{border-left-color:var(--ok)}
+.callout p:last-child{margin-bottom:0}
+
+ul{padding-left:1.25em;margin:0 0 1.2em}
+li{margin-bottom:.5em;max-width:38em}
+li::marker{color:var(--gold)}
+
+.svgwrap{margin-top:30px;background:#fff;border:1px solid var(--line);overflow-x:auto;padding:8px 0}
+.svgwrap::-webkit-scrollbar{height:8px}
+.svgwrap::-webkit-scrollbar-thumb{background:var(--paper-3);border-radius:4px}
+.svgwrap svg{display:block;min-width:940px;height:auto}
+.svghint{font-size:.8rem;color:var(--muted);margin-top:9px;line-height:1.7}
+
+.payload{background:var(--navy-deep);color:#B9C4D6;padding:24px 26px;margin-top:26px;overflow-x:auto}
+.payload pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.95;white-space:pre}
+.payload .k{color:#8D99AD}
+.payload .hl{background:var(--gold);color:#0D1930;font-weight:600;padding:2px 3px;border-radius:2px}
+.payload .cm{color:#5D6B84}
+.payload .ok{color:#4FA88E;font-weight:600}
+
+.timing{margin-top:36px;border:1px solid var(--line);background:#fff}
+.tbar{display:flex;height:40px}
+.tseg{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#fff;border-right:1px solid rgba(255,255,255,.25);overflow:hidden;white-space:nowrap}
+.tseg:last-child{border-right:0}
+.tlegend{display:flex;flex-wrap:wrap;border-top:1px solid var(--line)}
+.tlegend div{flex:1 1 118px;padding:12px 15px;border-right:1px solid var(--line);font-size:.78rem;line-height:1.6}
+.tlegend div:last-child{border-right:0}
+.tlegend b{display:block;font-family:var(--mono);font-size:.84rem;color:var(--navy)}
+.tlegend span{color:var(--muted)}
+.tfoot{border:1px solid var(--line);border-top:0;background:#fff;padding:16px 18px;font-size:.87rem;color:#3B4552}
+
+.verdict{background:var(--navy);color:#EDEFF3;padding:28px 30px;margin-top:32px;border-left:4px solid var(--gold)}
+.verdict h3{margin:0 0 12px;color:#fff;font-size:1.18rem}
+.verdict p{color:#C0C9D8;margin-bottom:.9em;max-width:44em}
+.verdict p:last-child{margin-bottom:0}
+.verdict b{color:var(--gold-lt)}
+
+.open{border-top:1px solid var(--line);margin-top:28px}
+.openrow{display:flex;gap:18px;padding:17px 0;border-bottom:1px solid var(--line);align-items:baseline;flex-wrap:wrap}
+.openrow .q{flex:1 1 210px;font-weight:700;font-size:.97rem}
+.openrow .o{flex:0 0 auto;font-family:var(--mono);font-size:.76rem;color:var(--stamp)}
+.openrow .d{flex:1 1 330px;font-size:.86rem;color:var(--muted);line-height:1.7}
+
+footer{background:var(--navy-deep);color:#7F8CA3;padding:42px 0;font-size:.82rem}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+@media(max-width:700px){.dgrid{grid-template-columns:1fr}.dcell{border-right:0;border-bottom:1px solid rgba(255,255,255,.1);padding-left:0!important}.dcell:last-child{border-bottom:0}}
+@media(max-width:600px){body{font-size:16px}section{padding:54px 0}.wrap{padding:0 20px}
+  .tbl{font-size:.79rem}.tbl th,.tbl td{padding:9px 10px}.verdict{padding:22px 20px}.toc{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}html{scroll-behavior:auto}}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="doctype">UX DESIGN / SOLANA EDITION</div>
+    <h1>Solanaでは、外部の決済網に頼らずに軽い方式が組める。</h1>
+    <p class="sub">EVM版では「ATM改修を最小にする」と引き換えにWalletConnect Payという外部事業者への依存が発生しました。Solanaでは、同じ軽さをSolana Payという公開仕様の自前実装で得られます。手数料も、日本での提供可否の照会も要りません。</p>
+    <p class="note">本書はv1.0（EVM版）の別冊です。共通部分——事前登録、旅券MRZ読取、ATM画面の骨格、記録要件の扱い——はv1.0をそのまま流用します。ここでは決済部分の差分だけを扱います。</p>
+
+    <div class="deltas">
+      <h4>EVM版との主な違い</h4>
+      <div class="dgrid">
+        <div class="dcell">
+          <div class="s up">有利</div>
+          <b>軽量方式に第三者が要らない</b>
+          <span>Solana Payは公開仕様。DAMSが自分で実装でき、決済手数料も外部事業者の可用性リスクも発生しない。</span>
+        </div>
+        <div class="dcell">
+          <div class="s up">有利</div>
+          <b>確定が速い</b>
+          <span>confirmed で約1〜2秒。Baseの1ブロック待ちより短く、ATMの沈黙時間が縮む。</span>
+        </div>
+        <div class="dcell">
+          <div class="s dn">不利</div>
+          <b>署名に有効期限がある</b>
+          <span>通常のトランザクションは150スロット（約80〜90秒）で失効する。ATMの操作時間と正面から衝突する。</span>
+        </div>
+        <div class="dcell">
+          <div class="s dn">不利</div>
+          <b>ガス肩代わりが自明でない</b>
+          <span>EIP-3009では構造上DAMSが必ず送信側になる。Solanaでは手数料負担者の設計を明示的に組む必要がある。</span>
+        </div>
+      </div>
+    </div>
+    <p class="hero-foot">結論を先に書くと、有効期限の問題は「Durable Nonce」で解け、しかもその副産物としてDAMSが署名済みトランザクションを一方的に無効化できる仕組みが手に入ります。これはEVM版にはなかった強い安全性です。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <ol>
+      <li><a href="#s1">01 Solana固有の制約</a></li>
+      <li><a href="#s2">02 方式A 自前署名</a></li>
+      <li><a href="#s3">03 方式B Solana Pay</a></li>
+      <li><a href="#s4">04 比較</a></li>
+      <li><a href="#s5">05 確認事項</a></li>
+    </ol>
+  </div>
+</nav>
+
+<section id="s1">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 01</span>
+    <h2>Solana固有の制約</h2>
+    <div class="prose"><p class="lede">ATMという用途で効いてくる制約が4つあります。順に潰します。</p></div>
+
+    <h3>① トランザクションが80〜90秒で失効する</h3>
+    <div class="prose">
+      <p>すべてのSolanaトランザクションは <code>recentBlockhash</code> を含み、これは150スロット（約80〜90秒）で失効します。二重支払い防止のための仕組みですが、ATMの操作時間と正面から衝突します。</p>
+      <p>v1.0で見積もったATM所要時間は約43秒でしたが、これは順調に進んだ場合の数字です。利用者が署名画面で迷えば、あるいはQRの読み取りに手間取れば、90秒は簡単に超えます。<strong>そのままではトランザクションが期限切れで落ち、原因不明のエラーとして利用者に返ることになります。</strong></p>
+      <p>解決策は <strong>Durable Nonce</strong> です。<code>recentBlockhash</code> の代わりにNonce口座に保存された値を使い、先頭の命令として <code>AdvanceNonceAccount</code> を置く。これで有効期限が消え、誰かがNonceを進めるまでトランザクションは有効なままになります。</p>
+    </div>
+
+    <div class="callout good">
+      <h4>副産物として、DAMS側の一方的な無効化手段が手に入る</h4>
+      <p>Nonceを進める権限（authority）はDAMSが持ちます。つまり<strong>DAMSはいつでもNonceを進めることで、既に署名済みのトランザクションを一方的に無効化できます。</strong>ATM側で障害を検知したとき、利用者の協力なしにその署名を殺せる。EIP-3009では利用者の <code>cancelAuthorization</code> 署名が必要でしたが、Solanaでは要りません。ATMという「止められないインフラ」に載せるうえで、これは大きな利点です。</p>
+    </div>
+
+    <table class="tbl">
+      <thead><tr><th style="width:26%">運用上の注意</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td class="st">Nonce口座はプール化</td><td>1つのNonce口座につき同時に処理できるトランザクションは1件です。ATMセッションごとに1口座を割り当てるプールが必要になります。口座あたりのレント免除に約0.0015 SOLかかるので、同時セッション数×0.0015 SOLが常時ロックされます。</td></tr>
+        <tr><td class="st">先頭命令の固定</td><td><code>AdvanceNonceAccount</code> は必ず命令列の先頭に置く必要があります。ランタイムはこの位置でNonceトランザクションかどうかを判定します。</td></tr>
+        <tr><td class="st">将来の廃止可能性</td><td><strong>公式ドキュメントに、Durable Nonceは将来のリリースで廃止される可能性があるとの注記があります（SIMD議論 #415）。</strong>設計に組み込む以上、代替手段（署名有効期間を短く切り、期限切れ時に自動で再クォートする）を併設しておくべきです。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>② 手数料の負担者をどう設計するか</h3>
+    <div class="prose">
+      <p>Solanaでは、トランザクションの手数料負担者（feePayer）は命令列の先頭アカウントであり、署名者のひとりです。<strong>DAMSをfeePayerに置いて部分署名すれば、利用者はSOLを1つも持っていなくても支払いができます。</strong></p>
+      <p>これは訪日客にとって決定的です。取引所からPhantomにUSDCだけを引き出した利用者は、SOLの残高がゼロであることがよくあります。手数料自体は1件あたり0.000005 SOL程度でごく僅かですが、ゼロでは送れません。ATMの前で「SOLが足りません」と表示されるのは、体験として最悪の部類です。</p>
+      <p>ただし後述するとおり、<strong>Solana Payのトランザクションリクエスト仕様では、ウォレット側がfeePayerを利用者のアカウントに上書きすると読める記述があります。</strong>この場合はDAMSによる肩代わりが効かなくなるため、Solana Foundationのフィーペイヤー標準である<strong>Kora</strong>などのペイマスター経由での肩代わりを検討することになります。</p>
+    </div>
+
+    <h3>③ 確定レベルの選択</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:20%">レベル</th><th style="width:18%">所要</th><th>ATMでの扱い</th></tr></thead>
+      <tbody>
+        <tr><td class="st">processed</td><td>約0.4秒</td><td class="no">採用しない。単一バリデータの受理にすぎず、巻き戻る。</td></tr>
+        <tr><td class="st">confirmed</td><td>約1〜2秒</td><td class="yes"><strong>これを採用。</strong>過半数の投票を得た状態で、￥10,000〜50,000のレンジなら巻き戻りリスクは実用上無視できる。EVM版の1ブロック待ちより速い。</td></tr>
+        <tr><td class="st">finalized</td><td>約13秒</td><td class="mid">ATMのUXには長すぎる。高額帯を扱う場合や、障害後の復旧確認に使う。</td></tr>
+      </tbody>
+      <caption>排出判定は confirmed で行い、日次のリコンシリエーションは finalized で突き合わせる、という二段構えにする。</caption>
+    </table>
+
+    <h3>④ ネイティブUSDCの識別</h3>
+    <div class="prose">
+      <p>Solana上にはブリッジ経由のUSDC（Wormhole版など）も流通しています。これらは別のミントアドレスを持つ別トークンです。<strong>Circle発行のネイティブUSDCのミントアドレスをアプリ・バックエンドの両方で固定してください。</strong></p>
+      <p>加えて、転送命令には <code>transfer</code> ではなく <code>transferChecked</code> を使います。ミントと小数桁数を命令内で検証するため、桁誤りによる事故を構造的に防げます。USDCは6桁です。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 02</span>
+    <h2>方式A：自前署名方式<span class="mark a">ATMカメラ必要</span></h2>
+    <div class="prose">
+      <p class="lede">DAMSがトランザクションを組み立て、feePayerとして部分署名し、利用者の署名だけをATMで受け取る。送信はDAMSが行う。</p>
+      <p>EVM版のEIP-3009方式と設計思想は同じです。違いは、署名対象が構造化データではなく<strong>トランザクションそのもの</strong>である点。命令の中身がすべて署名対象に含まれるため、金額・宛先・トークンの取り違えが構造的に起きません。</p>
+    </div>
+
+    <div class="payload"><pre><span class="k">Transaction</span>
+  feePayer:  <span class="hl">DAMS_FEE_PAYER</span>       <span class="cm">// ガスをDAMSが負担 → 利用者はSOL不要</span>
+  nonceInfo: {
+    nonceAccount:   <span class="k">NONCE_POOL_017</span>  <span class="cm">// セッションごとにプールから確保</span>
+    nonceAuthority: <span class="k">DAMS_AUTHORITY</span>  <span class="cm">// DAMSが一方的に無効化できる</span>
+    nonce:          <span class="hl">&lt;durable nonce&gt;</span> <span class="cm">// 有効期限なし</span>
+  }
+  instructions: [
+    0: <span class="k">System.advanceNonce</span>          <span class="cm">// 必ず先頭に置く</span>
+    1: <span class="k">Token.transferChecked</span> {
+         source:      <span class="k">USER_USDC_ATA</span>
+         mint:        <span class="hl">EPjFW…TDt1v</span>      <span class="cm">// ネイティブUSDCに固定</span>
+         destination: <span class="k">DAMS_USDC_ATA</span>
+         owner:       <span class="k">USER_PUBKEY</span>
+         amount:      <span class="hl">206_140_000</span>      <span class="cm">// 206.14 USDC</span>
+         decimals:    <span class="k">6</span>                <span class="cm">// 桁誤りを命令側で検証</span>
+       }
+    2: <span class="k">Memo</span> { referenceId: <span class="k">"ATM-8842-01F3"</span> }
+  ]
+  signatures: [
+    <span class="ok">DAMS_FEE_PAYER  ✓ 事前に部分署名済み</span>
+    <span class="hl">USER_PUBKEY     ← ATMで取得する唯一の署名</span>
+  ]</pre></div>
+    <p class="svghint">利用者が承認するのは1つの署名だけ。その署名対象にfeePayer・ミント・金額・宛先がすべて含まれているため、EVM版で必要だったchainIdの明示的な確認すら不要になる。</p>
+
+    <h3>シーケンス</h3>
+    <div class="svgwrap">
+<svg viewBox="0 0 1080 972" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Solana自前署名方式のシーケンス図">
+  <defs>
+    <marker id="sa" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#172B4D"/></marker>
+    <marker id="sg" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8C6E32"/></marker>
+    <style>
+      .hd{fill:#172B4D}
+      .hdt{font:600 12.5px 'Zen Kaku Gothic New',sans-serif;fill:#fff;text-anchor:middle}
+      .ll{stroke:#C6CAC1;stroke-width:1;stroke-dasharray:3 5}
+      .msg{stroke:#172B4D;stroke-width:1.4;fill:none}
+      .ret{stroke:#172B4D;stroke-width:1.2;fill:none;stroke-dasharray:5 4}
+      .cri{stroke:#8C6E32;stroke-width:1.9;fill:none}
+      .lb{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:middle}
+      .lbg{font:600 11.5px 'Zen Kaku Gothic New',sans-serif;fill:#7A5F26;text-anchor:middle}
+      .lbs{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:start}
+      .num{font:600 10.5px 'IBM Plex Mono',monospace;fill:#A5843C;text-anchor:middle}
+      .band{fill:#A5843C;opacity:.075}
+      .bandt{font:600 10.5px 'IBM Plex Mono',monospace;fill:#8C6E32;letter-spacing:.1em}
+    </style>
+  </defs>
+  <rect class="band" x="44" y="632" width="990" height="156"/>
+  <text class="bandt" x="1056" y="710" transform="rotate(90,1056,710)" text-anchor="middle">ORDER MATTERS</text>
+
+  <rect class="hd" x="60"  y="8" width="120" height="32" rx="2"/><text class="hdt" x="120" y="29">利用者</text>
+  <rect class="hd" x="240" y="8" width="120" height="32" rx="2"/><text class="hdt" x="300" y="29">アプリ</text>
+  <rect class="hd" x="450" y="8" width="120" height="32" rx="2"/><text class="hdt" x="510" y="29">ATM</text>
+  <rect class="hd" x="665" y="8" width="160" height="32" rx="2"/><text class="hdt" x="745" y="29">DAMS Backend</text>
+  <rect class="hd" x="900" y="8" width="120" height="32" rx="2"/><text class="hdt" x="960" y="29">Solana</text>
+
+  <line class="ll" x1="120" y1="40" x2="120" y2="950"/><line class="ll" x1="300" y1="40" x2="300" y2="950"/>
+  <line class="ll" x1="510" y1="40" x2="510" y2="950"/><line class="ll" x1="745" y1="40" x2="745" y2="950"/>
+  <line class="ll" x1="960" y1="40" x2="960" y2="950"/>
+
+  <text class="num" x="22" y="84">01</text><line class="msg" x1="120" y1="80" x2="510" y2="80" marker-end="url(#sa)"/><text class="lb" x="315" y="74">「USDCを現金に」→ 受取金額 ￥30,000 を選択</text>
+  <text class="num" x="22" y="122">02</text><line class="msg" x1="510" y1="118" x2="745" y2="118" marker-end="url(#sa)"/><text class="lb" x="627" y="112">クォート要求</text>
+  <text class="num" x="22" y="160">03</text><path class="msg" d="M745 150 h52 v18 h-52" marker-end="url(#sa)"/><text class="lbs" x="805" y="164">レート確定・Nonce口座をプールから確保</text>
+  <text class="num" x="22" y="198">04</text><path class="msg" d="M745 188 h52 v18 h-52" marker-end="url(#sa)"/><text class="lbs" x="805" y="202">tx構築（feePayer=DAMS）→ 部分署名</text>
+  <text class="num" x="22" y="236">05</text><line class="ret" x1="745" y1="232" x2="510" y2="232" marker-end="url(#sa)"/><text class="lb" x="627" y="226">部分署名済みトランザクション</text>
+  <text class="num" x="22" y="274">06</text><line class="msg" x1="510" y1="270" x2="120" y2="270" marker-end="url(#sa)"/><text class="lb" x="315" y="264">確認画面 → QRを表示</text>
+  <text class="num" x="22" y="312">07</text><line class="msg" x1="120" y1="308" x2="300" y2="308" marker-end="url(#sa)"/><text class="lb" x="210" y="302">QRを読み取る</text>
+  <text class="num" x="22" y="350">08</text><path class="msg" d="M300 340 h52 v18 h-52" marker-end="url(#sa)"/><text class="lbs" x="360" y="354">命令の中身を人間可読で表示</text>
+  <text class="num" x="22" y="388">09</text><line class="msg" x1="120" y1="384" x2="300" y2="384" marker-end="url(#sa)"/><text class="lb" x="210" y="378">承認（生体認証）</text>
+  <text class="num" x="22" y="426">10</text><path class="msg" d="M300 416 h52 v18 h-52" marker-end="url(#sa)"/><text class="lbs" x="360" y="430">署名を生成（オフライン可・期限なし）</text>
+  <text class="num" x="22" y="464">11</text><line class="msg" x1="300" y1="460" x2="510" y2="460" marker-end="url(#sa)"/><text class="lb" x="405" y="454">署名QRを提示 / ATMカメラが読取</text>
+  <text class="num" x="22" y="502">12</text><line class="msg" x1="510" y1="498" x2="745" y2="498" marker-end="url(#sa)"/><text class="lb" x="627" y="492">利用者署名を転送</text>
+  <text class="num" x="22" y="540">13</text><path class="msg" d="M745 530 h52 v18 h-52" marker-end="url(#sa)"/><text class="lbs" x="805" y="544">署名者＝登録アドレスを照合・記録3項目を取得</text>
+  <text class="num" x="22" y="578">14</text><line class="msg" x1="745" y1="574" x2="960" y2="574" marker-end="url(#sa)"/><text class="lb" x="852" y="568">simulateTransaction / 残高確認</text>
+  <text class="num" x="22" y="616">15</text><line class="ret" x1="960" y1="612" x2="745" y2="612" marker-end="url(#sa)"/><text class="lb" x="852" y="606">成功見込み・残高 OK</text>
+  <text class="num" x="22" y="654">16</text><line class="cri" x1="745" y1="650" x2="510" y2="650" marker-end="url(#sg)"/><text class="lbg" x="627" y="644">払出し可否の事前確認</text>
+  <text class="num" x="22" y="692">17</text><line class="ret" x1="510" y1="688" x2="745" y2="688" marker-end="url(#sa)"/><text class="lb" x="627" y="682">カセット残量・金種在庫 OK</text>
+  <text class="num" x="22" y="730">18</text><line class="cri" x1="745" y1="726" x2="960" y2="726" marker-end="url(#sg)"/><text class="lbg" x="852" y="720">sendTransaction</text>
+  <text class="num" x="22" y="768">19</text><line class="ret" x1="960" y1="764" x2="745" y2="764" marker-end="url(#sa)"/><text class="lb" x="852" y="758">confirmed（約1〜2秒）</text>
+  <text class="num" x="22" y="806">20</text><line class="msg" x1="745" y1="802" x2="510" y2="802" marker-end="url(#sa)"/><text class="lb" x="627" y="796">排出指示</text>
+  <text class="num" x="22" y="844">21</text><line class="msg" x1="510" y1="840" x2="120" y2="840" marker-end="url(#sa)"/><text class="lb" x="315" y="834">紙幣を排出</text>
+  <text class="num" x="22" y="882">22</text><path class="msg" d="M745 872 h52 v18 h-52" marker-end="url(#sa)"/><text class="lbs" x="805" y="886">確定記録・明細メール送信・Nonce口座を返却</text>
+
+  <line x1="44" y1="918" x2="1034" y2="918" stroke="#C6CAC1" stroke-width="1"/>
+  <text class="lbs" x="44" y="938" style="font-size:11px;fill:#5B6675">実線＝要求　破線＝応答　金色＝順序が結果を左右する区間（16〜19）</text>
+</svg>
+    </div>
+    <p class="svghint">EVM版と同じく、払出しの可否を確定させてから送信する。異常時はNonceを進めるだけで署名済みトランザクションが無効になるため、後始末が単純。</p>
+
+    <h3>時間配分</h3>
+    <div class="timing">
+      <div class="tbar">
+        <div class="tseg" style="width:7%;background:#2E4570">3s</div>
+        <div class="tseg" style="width:12%;background:#3D5A8C">5s</div>
+        <div class="tseg" style="width:20%;background:#4E6FA6">8s</div>
+        <div class="tseg" style="width:27%;background:#A5843C">11s</div>
+        <div class="tseg" style="width:15%;background:#8C6E32">6s</div>
+        <div class="tseg" style="width:5%;background:#1D6B58">2s</div>
+        <div class="tseg" style="width:14%;background:#2E4570">6s</div>
+      </div>
+      <div class="tlegend">
+        <div><b>A1 選択</b><span>取引メニュー</span></div>
+        <div><b>A2 金額</b><span>1タップ</span></div>
+        <div><b>A3 確認</b><span>レートを読む</span></div>
+        <div><b>A4 署名</b><span>アプリ起動・読取・承認</span></div>
+        <div><b>A5 提示</b><span>署名QRの読み取り</span></div>
+        <div><b>確定</b><span>confirmed待ち</span></div>
+        <div><b>A7 排出</b><span>計数と受取</span></div>
+      </div>
+      <div class="tfoot">合計およそ41秒。EVM版（43秒）よりわずかに短い。差は確定待ちの2秒。Durable Nonceを使うため、利用者が署名画面で長く迷っても失効しない。</div>
+    </div>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 03</span>
+    <h2>方式B：Solana Pay<span class="mark b">ATM改修は最小</span></h2>
+    <div class="prose">
+      <p class="lede">ATMは <code>solana:</code> で始まるURLをQRとして表示するだけ。読取機構は不要です。</p>
+      <p>Solana Payは、Solanaのトランザクションリクエストをそのままログにするための公開仕様です。BIP 21とEIP 681を参考に設計され、Phantomをはじめとする主要ウォレットが実装しています。QRコードやNFCタグに埋め込んで、支払いの要求やトランザクションの組み立てに使えます。</p>
+      <p><strong>ここがEVM版との決定的な違いです。</strong>WalletConnect Payのような外部の決済網に加盟する必要がなく、DAMSが自分のサーバに仕様どおりのエンドポイントを立てるだけで成立します。加盟店手数料もかからず、日本での提供可否を照会する必要もありません。</p>
+    </div>
+
+    <h3>トランザクションリクエストの流れ</h3>
+    <div class="prose">
+      <p>URLは <code>solana:</code> の後にHTTPSのURLを置く形式です。ウォレットはそのURLに対してHTTPリクエストを行い、トランザクションを組み立てます。仕様上、まずGETで表示用のラベルとアイコンを取得し、次にPOSTで利用者のアカウントを送ってきます。DAMSはそれを受けてトランザクションを構築し、base64でシリアライズして返します。</p>
+      <p>利用者が支払ったことをDAMSが検知する仕組みが <code>reference</code> です。署名者ではないアカウントとしてトランザクションに含めておくと、<code>findReference</code> でそのトランザクションを特定でき、<code>validateTransfer</code> で宛先と金額が期待どおりかを検証できます。<strong>ATMは決済IDを一切扱わず、referenceの検出だけで排出判定ができます。</strong></p>
+    </div>
+
+    <div class="svgwrap">
+<svg viewBox="0 0 1080 930" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Solana Pay方式のシーケンス図">
+  <defs>
+    <marker id="pa" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#172B4D"/></marker>
+    <marker id="pg" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8C6E32"/></marker>
+    <marker id="pr" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9E2F28"/></marker>
+    <style>
+      .hd3{fill:#172B4D}
+      .hdt3{font:600 12px 'Zen Kaku Gothic New',sans-serif;fill:#fff;text-anchor:middle}
+      .ll3{stroke:#C6CAC1;stroke-width:1;stroke-dasharray:3 5}
+      .msg3{stroke:#172B4D;stroke-width:1.4;fill:none}
+      .ret3{stroke:#172B4D;stroke-width:1.2;fill:none;stroke-dasharray:5 4}
+      .cri3{stroke:#8C6E32;stroke-width:1.9;fill:none}
+      .out3{stroke:#9E2F28;stroke-width:1.7;fill:none}
+      .lb3{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:middle}
+      .lbg3{font:600 11.5px 'Zen Kaku Gothic New',sans-serif;fill:#7A5F26;text-anchor:middle}
+      .lbr3{font:600 11.5px 'Zen Kaku Gothic New',sans-serif;fill:#9E2F28;text-anchor:middle}
+      .lbs3{font:11.5px 'Zen Kaku Gothic New',sans-serif;fill:#1C2430;text-anchor:start}
+      .num3{font:600 10.5px 'IBM Plex Mono',monospace;fill:#A5843C;text-anchor:middle}
+      .bg3{fill:#A5843C;opacity:.09} .br3{fill:#9E2F28;opacity:.07}
+      .bt3{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.09em}
+    </style>
+  </defs>
+  <rect class="bg3" x="44" y="176" width="990" height="80"/>
+  <rect class="br3" x="44" y="594" width="990" height="42"/>
+
+  <rect class="hd3" x="60"  y="8" width="118" height="32" rx="2"/><text class="hdt3" x="119" y="29">利用者</text>
+  <rect class="hd3" x="238" y="8" width="128" height="32" rx="2"/><text class="hdt3" x="302" y="29">ウォレット</text>
+  <rect class="hd3" x="452" y="8" width="118" height="32" rx="2"/><text class="hdt3" x="511" y="29">ATM</text>
+  <rect class="hd3" x="665" y="8" width="158" height="32" rx="2"/><text class="hdt3" x="744" y="29">DAMS Backend</text>
+  <rect class="hd3" x="900" y="8" width="120" height="32" rx="2"/><text class="hdt3" x="960" y="29">Solana</text>
+
+  <line class="ll3" x1="119" y1="40" x2="119" y2="908"/><line class="ll3" x1="302" y1="40" x2="302" y2="908"/>
+  <line class="ll3" x1="511" y1="40" x2="511" y2="908"/><line class="ll3" x1="744" y1="40" x2="744" y2="908"/>
+  <line class="ll3" x1="960" y1="40" x2="960" y2="908"/>
+
+  <text class="num3" x="22" y="82">01</text><line class="msg3" x1="119" y1="78" x2="511" y2="78" marker-end="url(#pa)"/><text class="lb3" x="315" y="72">「USDCを現金に」→ 受取金額 ￥30,000 を選択</text>
+  <text class="num3" x="22" y="120">02</text><line class="msg3" x1="511" y1="116" x2="744" y2="116" marker-end="url(#pa)"/><text class="lb3" x="627" y="110">クォート要求</text>
+  <text class="num3" x="22" y="158">03</text><path class="msg3" d="M744 148 h52 v18 h-52" marker-end="url(#pa)"/><text class="lbs3" x="804" y="162">レート確定・reference鍵ペアを生成</text>
+  <text class="num3" x="22" y="196">04</text><line class="cri3" x1="744" y1="192" x2="511" y2="192" marker-end="url(#pg)"/><text class="lbg3" x="627" y="186">払出し可否の事前確認</text>
+  <text class="num3" x="22" y="234">05</text><line class="ret3" x1="511" y1="230" x2="744" y2="230" marker-end="url(#pa)"/><text class="lb3" x="627" y="224">カセット残量・金種在庫 OK</text>
+  <text class="num3" x="22" y="272">06</text><line class="msg3" x1="744" y1="268" x2="511" y2="268" marker-end="url(#pa)"/><text class="lb3" x="627" y="262">solana:https://… のURLを渡す</text>
+  <text class="num3" x="22" y="310">07</text><line class="msg3" x1="511" y1="306" x2="119" y2="306" marker-end="url(#pa)"/><text class="lb3" x="315" y="300">QRを表示</text>
+  <text class="num3" x="22" y="348">08</text><line class="msg3" x1="119" y1="344" x2="302" y2="344" marker-end="url(#pa)"/><text class="lb3" x="210" y="338">ウォレットでスキャン</text>
+  <text class="num3" x="22" y="386">09</text><line class="msg3" x1="302" y1="382" x2="744" y2="382" marker-end="url(#pa)"/><text class="lb3" x="523" y="376">GET（表示用のラベルとアイコン）</text>
+  <text class="num3" x="22" y="424">10</text><line class="msg3" x1="302" y1="420" x2="744" y2="420" marker-end="url(#pa)"/><text class="lb3" x="523" y="414">POST { account: 利用者のpubkey }</text>
+  <text class="num3" x="22" y="462">11</text><path class="msg3" d="M744 452 h52 v18 h-52" marker-end="url(#pa)"/><text class="lbs3" x="804" y="466">tx構築（referenceを非署名アカウントとして同梱）</text>
+  <text class="num3" x="22" y="500">12</text><line class="ret3" x1="744" y1="496" x2="302" y2="496" marker-end="url(#pa)"/><text class="lb3" x="523" y="490">base64シリアライズしたtx＋説明文</text>
+  <text class="num3" x="22" y="538">13</text><line class="msg3" x1="119" y1="534" x2="302" y2="534" marker-end="url(#pa)"/><text class="lb3" x="210" y="528">内容を確認して承認</text>
+  <text class="num3" x="22" y="576">14</text><path class="msg3" d="M302 566 h52 v18 h-52" marker-end="url(#pa)"/><text class="lbs3" x="362" y="580">署名を生成</text>
+  <text class="num3" x="22" y="614">15</text><line class="out3" x1="302" y1="610" x2="960" y2="610" marker-end="url(#pr)"/><text class="lbr3" x="631" y="604">ウォレットが送信（DAMSの制御外）</text>
+  <text class="num3" x="22" y="652">16</text><line class="msg3" x1="744" y1="648" x2="960" y2="648" marker-end="url(#pa)"/><text class="lb3" x="852" y="642">findReference でポーリング</text>
+  <text class="num3" x="22" y="690">17</text><line class="ret3" x1="960" y1="686" x2="744" y2="686" marker-end="url(#pa)"/><text class="lb3" x="852" y="680">該当署名を検出</text>
+  <text class="num3" x="22" y="728">18</text><path class="msg3" d="M744 718 h52 v18 h-52" marker-end="url(#pa)"/><text class="lbs3" x="804" y="732">validateTransfer で宛先と金額を検証</text>
+  <text class="num3" x="22" y="766">19</text><line class="msg3" x1="744" y1="762" x2="511" y2="762" marker-end="url(#pa)"/><text class="lb3" x="627" y="756">排出指示</text>
+  <text class="num3" x="22" y="804">20</text><line class="msg3" x1="511" y1="800" x2="119" y2="800" marker-end="url(#pa)"/><text class="lb3" x="315" y="794">紙幣を排出</text>
+  <text class="num3" x="22" y="842">21</text><path class="msg3" d="M744 832 h52 v18 h-52" marker-end="url(#pa)"/><text class="lbs3" x="804" y="846">確定記録・明細メール送信</text>
+
+  <text class="bt3" x="52" y="192" fill="#8C6E32">PRE-FLIGHT</text>
+  <text class="bt3" x="52" y="608" fill="#9E2F28">OUT OF CONTROL</text>
+  <line x1="44" y1="876" x2="1034" y2="876" stroke="#C6CAC1" stroke-width="1"/>
+  <text class="lbs3" x="44" y="896" style="font-size:11px;fill:#5B6675">金色＝払出し可否を先に確定させる区間　赤＝DAMSが制御できない区間</text>
+</svg>
+    </div>
+    <p class="svghint">15でDAMSの手を離れる。だから4と5を6より前に置く。EVM版のWalletConnect Payと同じ構造だが、間に立つのは外部事業者ではなくウォレット自身。</p>
+
+    <div class="callout risk">
+      <h4>仕様の読みに曖昧さがある。実装前に検証してください</h4>
+      <p>Solana Pay v1.1の仕様には、トランザクションリクエストにおいて<strong>ウォレットはトランザクション内のfeePayerを無視してリクエスト中のアカウントに設定し、recentBlockhashも無視して最新のものに設定しなければならない</strong>という記述があります。文字どおりなら、DAMSによるガス肩代わりもDurable Nonceも効きません。</p>
+      <p>一方で、同じ仕様群には<strong>アプリケーションは部分署名または完全署名したトランザクションを返してよく、ウォレットはそれを信頼できないものとして検証しなければならない</strong>という記述もあり、部分署名を前提としたガイドも複数存在します。バージョン間の差か、節ごとの適用範囲の違いと思われます。</p>
+      <p><strong>Phantomなど対象ウォレットの実機で、DAMSをfeePayerにした部分署名済みトランザクションが通るかを最初に検証してください。</strong>通らない場合は、Solana Foundationのフィーペイヤー標準であるKoraのようなペイマスター経由での肩代わりに切り替えます。ペイマスターは利用者がSOLを1つも持たない口座から送金でき、手数料をUSDCなどで支払える仕組みを提供します。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 04</span>
+    <h2>比較</h2>
+
+    <h3>Solana版の2方式</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:26%">評価軸</th><th style="width:37%">方式A 自前署名</th><th>方式B Solana Pay</th></tr></thead>
+      <tbody>
+        <tr><td class="st">ATMハード要件</td><td class="no">カメラ追加が必要</td><td class="yes">なし（QR表示のみ）</td></tr>
+        <tr><td class="st">スマホ側の通信</td><td class="yes">不要</td><td class="no">必要</td></tr>
+        <tr><td class="st">アプリ導入</td><td class="no">DAMSアプリ必須</td><td class="yes">Phantom等の既存ウォレットで可</td></tr>
+        <tr><td class="st">署名の有効期限</td><td class="yes">なし（Durable Nonce）</td><td class="mid">約80〜90秒（ウォレットが最新blockhashを設定）</td></tr>
+        <tr><td class="st">ガスの肩代わり</td><td class="yes">DAMSがfeePayer</td><td class="mid">仕様の読みが要検証。不可ならペイマスター併用</td></tr>
+        <tr><td class="st">送信順序の制御</td><td class="yes">DAMSが握る</td><td class="no">ウォレット側</td></tr>
+        <tr><td class="st">署名の一方的な無効化</td><td class="yes">Nonceを進めるだけ</td><td class="no">不可</td></tr>
+        <tr><td class="st">決済手数料</td><td class="yes">ガス代のみ</td><td class="yes">ガス代のみ</td></tr>
+        <tr><td class="st">外部依存</td><td class="yes">なし</td><td class="yes">なし（公開仕様の自前実装）</td></tr>
+        <tr><td class="st">開発規模</td><td class="no">アプリ＋ウォレット＋リレーヤー</td><td class="yes">エンドポイント2本（GET / POST）</td></tr>
+        <tr><td class="st">ATM所要時間</td><td>約41秒</td><td>約43秒</td></tr>
+      </tbody>
+    </table>
+
+    <h3>EVM版との対照</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:24%">論点</th><th style="width:38%">EVM（v1.0）</th><th>Solana（本書）</th></tr></thead>
+      <tbody>
+        <tr><td class="st">軽量方式の実体</td><td class="mid">WalletConnect Pay（外部の決済網）</td><td class="yes">Solana Pay（公開仕様の自前実装）</td></tr>
+        <tr><td class="st">軽量方式の手数料</td><td class="no">0.5〜1.0％＋ガス</td><td class="yes">ガスのみ</td></tr>
+        <tr><td class="st">軽量方式の可用性</td><td class="no">日本での提供可否が未確認</td><td class="yes">仕様なので提供可否の概念がない</td></tr>
+        <tr><td class="st">確定待ち</td><td class="mid">2〜30秒（チェーン次第）</td><td class="yes">約1〜2秒</td></tr>
+        <tr><td class="st">署名の有効期限</td><td class="yes">DAMSが自由に設定（180秒等）</td><td class="mid">既定80〜90秒。Durable Nonceで解除</td></tr>
+        <tr><td class="st">署名の無効化</td><td class="no">利用者の署名が必要</td><td class="yes">DAMSが単独で可能</td></tr>
+        <tr><td class="st">対象ユーザーの広さ</td><td class="yes">700以上のウォレット＋CEX残高</td><td class="mid">Solana Pay対応ウォレット</td></tr>
+        <tr><td class="st">ネットワーク信頼性</td><td class="yes">大規模停止の実績なし</td><td class="mid">過去に停止の実績あり。縮退運転の設計が要る</td></tr>
+      </tbody>
+      <caption>ネットワーク停止時は「USDC換金」の導線自体をATM画面から隠す縮退モードを用意する。復旧確認は finalized で行う。</caption>
+    </table>
+
+    <div class="verdict">
+      <h3>Solanaで進めるなら、方式Bから入るのが合理的</h3>
+      <p><b>EVM版で方式Bを勧めにくかった理由が、Solanaでは消えています。</b>WalletConnect Payに依存することの代償——0.5〜1.0％の手数料、日本での提供可否の不確実性、仕様変更が外部判断になること——が、Solana Payでは一切発生しません。公開仕様をDAMSが自分で実装するだけです。</p>
+      <p>ATM側への要求もQR表示だけで、セブン銀行との協議は最も軽い形になります。確定待ちも1〜2秒と短く、EVM版で懸念した「30秒の沈黙」も起きません。</p>
+      <p>ただし<b>feePayerとDurable Nonceの扱いを実機で検証するのが先です。</b>ここが仕様どおりに「ウォレットが上書きする」なら、利用者にSOL残高を要求することになり、訪日客向けとしては成立しません。その場合はペイマスターを噛ませるか、方式Aに倒します。</p>
+    </div>
+
+    <h3>チェーン選択そのものの判断</h3>
+    <div class="prose">
+      <p>EVM版とSolana版のどちらを本線にするかは、技術ではなく<strong>訪日客のUSDC保有実態</strong>で決まります。取引所からどのチェーンで引き出しているか、どのウォレットを使っているか。ここは調査が先で、設計の優劣で決める話ではありません。</p>
+      <p>両対応も可能です。事前登録で利用者にチェーンを選ばせ、ATM画面では同じ導線に見せる。ただし決済アダプタが2系統になるため、開発と運用の負荷は素直に2倍近くになります。POCの段階では片方に絞ることを勧めます。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s5">
+  <div class="wrap">
+    <span class="chev">&lt;&lt;&lt; 05</span>
+    <h2>確認事項</h2>
+    <div class="open">
+      <div class="openrow"><div class="q">部分署名済みトランザクションの受理</div><div class="o">実機検証</div><div class="d"><strong>最優先。</strong>DAMSをfeePayerにした部分署名済みtxを、Phantom等がSolana Payのトランザクションリクエストで受理するか。ここでガス肩代わりの可否が決まる。</div></div>
+      <div class="openrow"><div class="q">Durable Nonceとの併用</div><div class="o">実機検証</div><div class="d">ウォレットがrecentBlockhashを上書きするなら併用できない。方式Bで有効期限をどう扱うかが決まる。</div></div>
+      <div class="openrow"><div class="q">Durable Nonce廃止の見通し</div><div class="o">SIMD追跡</div><div class="d">公式ドキュメントに将来の廃止可能性の注記がある。議論 #415 の動向を追い、代替手段を併設する。</div></div>
+      <div class="openrow"><div class="q">ペイマスターの評価</div><div class="o">技術調査</div><div class="d">Koraなどのフィーペイヤー標準。ガス肩代わりが方式Bで効かない場合の代替。手数料をUSDCで支払える点も含めて評価する。</div></div>
+      <div class="openrow"><div class="q">訪日客のチェーン保有実態</div><div class="o">市場調査</div><div class="d">EVM版とSolana版のどちらを本線にするかを決める唯一の材料。</div></div>
+      <div class="openrow"><div class="q">ネットワーク停止時の縮退</div><div class="o">要設計</div><div class="d">ATM画面から導線を隠す仕組みと、その判定を誰がどの頻度で行うか。</div></div>
+      <div class="openrow"><div class="q">払出し可否の事前照会</div><div class="o">セブン銀行</div><div class="d">v1.0と共通。カセット残量や金種在庫を排出前に照会できるか。</div></div>
+      <div class="openrow"><div class="q">QR表示の自由度</div><div class="o">セブン銀行</div><div class="d">v1.0と共通。任意の文字列をQR化して画面表示できるか。</div></div>
+      <div class="openrow"><div class="q">カメラの用途拡張</div><div class="o">セブン銀行</div><div class="d">方式A限定。v1.0と共通。</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>USDC現金化ATM — Solana版 UX設計書（v1.0の別冊）</span>
+    <span>株式会社デジタルアセットマーケッツ</span>
+  </div>
+</footer>
+
+</body>
+</html>
